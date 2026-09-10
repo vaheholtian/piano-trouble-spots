@@ -2,7 +2,9 @@
 
 A local MIDI piano practice tool focused on timing and physical key-hold lengths in a selected section.
 
-Open `piano-mistake-tracker.html` in a browser with MIDI support. Keep `piano-core.js` and `piano-app.js` in the same folder. No installation, server, or build is required.
+Hosted at <https://vaheholtian.github.io/piano-trouble-spots/>, or open `piano-mistake-tracker.html` locally. Keep `piano-core.js` and `piano-app.js` in the same folder. No installation, server, or build is required.
+
+Recording needs the Web MIDI API. Chrome, Edge, and Opera support it on desktop and Android. Firefox, and every browser on iOS and iPadOS, do not: those can open the page and load a saved session, but cannot connect a piano.
 
 ## Practice
 
