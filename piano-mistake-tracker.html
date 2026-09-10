@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b2430">
+<title>Trouble spots — time & touch</title>
+<style>
+  :root { --bg:#1b2430; --surface:#243040; --raised:#2d3b4d; --line:#43546a;
+    --ink:#efe9da; --muted:#b0bac7; --good:#8ad2b0; --heat:#ef997f; --radius:14px; }
+  * { box-sizing:border-box; }
+  body { margin:0 auto; padding:32px 20px max(32px,env(safe-area-inset-bottom)); max-width:1000px;
+    background:var(--bg); color:var(--ink); font:16px/1.5 "Segoe UI",sans-serif; }
+  h1 { font:normal clamp(36px,6vw,52px)/1.1 Georgia,serif; letter-spacing:-.035em; margin:8px 0 14px; }
+  h2 { font-size:16px; font-weight:600; margin:0 0 16px; }
+  h3 { font-size:15px; margin:20px 0 8px; }
+  p { margin:8px 0; }
+  header { padding:0 0 24px; max-width:700px; }
+  .eyebrow { color:var(--good); text-transform:uppercase; letter-spacing:.16em; font-size:11px; font-weight:700; }
+  .sub, .hint { color:var(--muted); font-size:14px; }
+  .hint { font-size:13px; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .setup { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .card { border:1px solid var(--line); background:var(--surface); border-radius:var(--radius); padding:22px; margin-bottom:16px; min-width:0; }
+  .setup .card { margin-bottom:0; }
+  .setup { margin-bottom:16px; }
+  .step { color:var(--good); margin-right:10px; font-variant-numeric:tabular-nums; }
+  label.field { display:flex; flex-direction:column; gap:6px; color:var(--muted); font-size:13px; flex:1; min-width:100px; }
+  button, select, input { font:inherit; color:var(--ink); }
+  button, select, label.file { background:var(--raised); border:1px solid var(--line); border-radius:8px; padding:10px 13px; min-height:44px; }
+  button, select, label.file { cursor:pointer; }
+  button { font-weight:600; }
+  button:hover:not(:disabled), label.file:hover { border-color:var(--muted); }
+  button:focus-visible, select:focus-visible, input:focus-visible, label.file:focus-within, summary:focus-visible {
+    outline:2px solid var(--good); outline-offset:3px; }
+  button.primary { background:var(--good); color:#13281f; border-color:transparent; }
+  button.stop { background:var(--heat); color:#31180f; border-color:transparent; }
+  :disabled { opacity:.45; cursor:default; }
+  label.file { display:inline-flex; align-items:center; position:relative; font-weight:600; }
+  label.file:has(input:disabled) { opacity:.45; cursor:default; }
+  input[type=file] { position:absolute; width:1px; height:1px; opacity:0; }
+  input[type=number] { width:100%; min-height:44px; border:1px solid var(--line); border-radius:8px; padding:8px 12px; background:var(--raised); }
+  select { max-width:100%; }
+  #songName { overflow-wrap:anywhere; margin:12px 0 16px; }
+  .section-readout { margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
+  .status { display:flex; align-items:center; gap:10px; margin-bottom:16px; min-height:30px; }
+  .dot { width:10px; height:10px; background:var(--muted); border-radius:50%; flex:none; }
+  .dot.armed { background:var(--good); }
+  .dot.recording { background:var(--heat); animation:pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity:.35; } }
+  details { margin-top:18px; }
+  summary { cursor:pointer; color:var(--muted); font-size:14px; }
+  .settings { padding-top:12px; }
+  .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0; }
+  .metric { border-left:2px solid var(--line); padding-left:14px; }
+  .metric-value { display:block; font:normal 28px/1.2 Georgia,serif; font-variant-numeric:tabular-nums; margin-top:6px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(52px,1fr)); gap:8px; margin:18px 0 10px; }
+  .bar { padding:12px 6px; min-height:64px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .bar.covered { color:var(--ink); }
+  .bar[aria-pressed=true] { outline:2px solid var(--ink); outline-offset:2px; }
+  .bar small { display:block; font-size:10px; font-weight:400; margin-top:3px; }
+  .legend { display:flex; gap:10px; align-items:center; color:var(--muted); font-size:12px; }
+  .swatch { width:50px; height:8px; background:linear-gradient(90deg,var(--raised),#97523e); border-radius:4px; }
+  .issue-list { padding:0; margin:14px 0 0; list-style:none; }
+  .issue-list li { display:flex; justify-content:space-between; gap:16px; padding:12px 0; border-top:1px solid var(--line); }
+  .count { color:var(--heat); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .table-scroll { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:13px; font-variant-numeric:tabular-nums; }
+  th, td { text-align:left; border-bottom:1px solid var(--line); padding:10px 10px 10px 0; white-space:nowrap; }
+  th { color:var(--muted); font-size:11px; font-weight:600; }
+  td.issue { color:var(--heat); }
+  .notice { color:var(--heat); font-size:14px; }
+  .session { background:transparent; }
+  .hidden, [hidden] { display:none !important; }
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); max-width:min(600px,calc(100% - 32px));
+    width:max-content; padding:12px 18px; border-radius:10px; background:var(--ink); color:var(--bg); box-shadow:0 8px 36px #0005; z-index:2; }
+  footer { color:var(--muted); font-size:12px; }
+  @media(max-width:650px) { .setup { grid-template-columns:1fr; } body { padding:24px 14px; } .card { padding:18px; }
+    .metrics { gap:8px; } .metric { padding-left:8px; } .metric-value { font-size:23px; } }
+  @media(prefers-reduced-motion:reduce) { .dot.recording { animation:none; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="eyebrow">Piano practice · time & touch</span>
+  <h1>Trouble spots</h1>
+  <p class="sub">A few measures, played with intention. See where your rhythm slips and which notes you release too soon or hold too long.</p>
+</header>
+<main>
+<div class="setup">
+  <section class="card" aria-labelledby="sectionHeading">
+    <h2 id="sectionHeading"><span class="step">01</span>Choose your section</h2>
+    <label class="file"><input type="file" id="midiFile" accept=".mid,.midi">Load reference MIDI</label>
+    <p id="songName" class="sub">No song loaded</p>
+    <div class="row">
+      <label class="field">Start measure<input type="number" id="startBar" value="1" min="1" step="1" disabled></label>
+      <label class="field">Section length<select id="measures" disabled><option value="4">4 measures</option><option value="8">8 measures</option></select></label>
+    </div>
+    <label class="field" style="margin-top:12px">Reference part<select id="track" disabled><option value="all">All tracks</option></select></label>
+    <div class="section-readout">
+      <p id="sectionSummary" class="sub">Load a MIDI file to choose a section.</p>
+      <p class="hint">Timing follows the MIDI file, including its tempo changes.</p>
+    </div>
+  </section>
+  <section class="card" aria-labelledby="takeHeading">
+    <h2 id="takeHeading"><span class="step">02</span>Play it through</h2>
+    <div class="row">
+      <button id="connect">Connect piano</button>
+      <select id="inputs" aria-label="MIDI piano input" hidden></select>
+    </div>
+    <p id="midiStatus" class="hint">Connect your piano over MIDI, then allow access in your browser.</p>
+    <div class="status" style="margin-top:22px" role="status"><span id="dot" class="dot" aria-hidden="true"></span>
+      <span id="takeStatus">Loading…</span></div>
+    <div class="row">
+      <button id="arm" class="primary" disabled>Ready to record</button>
+      <button id="stop" class="stop" hidden>Stop & review</button>
+      <button id="discard" hidden>Discard</button>
+    </div>
+    <p class="hint">Start on the section’s first note or chord. Release the final keys, then stop. Long notes and rests won’t end your take.</p>
+    <details>
+      <summary>Timing tolerances & how it measures</summary>
+      <div class="row settings">
+        <label class="field">Note length · ms<input id="lengthTolerance" type="number" value="80" min="10" max="500" step="10"></label>
+        <label class="field">Note start · ms<input id="attackTolerance" type="number" value="80" min="10" max="500" step="10"></label>
+      </div>
+      <p class="hint">Note length is key-down to key-up, compared with the reference MIDI’s note length. Sustain pedal resonance is not measured.</p>
+      <p class="hint">Your first note starts the clock. Later notes stay on the MIDI’s timeline; the app does not adjust the reference to follow your tempo.</p>
+      <p class="hint">Pitch identifies which key to time. Wrong, missing, or ambiguous notes are left unassessed. Fingering is not detected.</p>
+    </details>
+  </section>
+</div>
+
+<section id="lastTake" class="card" aria-labelledby="lastHeading" hidden>
+  <h2 id="lastHeading">Latest take</h2>
+  <p id="lastSummary" class="sub"></p>
+  <div class="metrics">
+    <div class="metric"><span class="hint">Note length error</span><strong id="lengthMetric" class="metric-value">—</strong><span class="hint">median difference</span></div>
+    <div class="metric"><span class="hint">Note start error</span><strong id="attackMetric" class="metric-value">—</strong><span class="hint">median difference</span></div>
+    <div class="metric"><span class="hint">Timing drift</span><strong id="driftMetric" class="metric-value">—</strong><span id="driftCaption" class="hint">across assessed notes</span></div>
+  </div>
+  <p id="coverageNotice" class="notice"></p>
+  <details open>
+    <summary>Note-by-note timing</summary>
+    <div class="table-scroll" role="region" aria-label="Note timing results" tabindex="0">
+      <table><thead><tr><th scope="col">Measure · beat</th><th scope="col">Key</th><th scope="col">MIDI length</th><th scope="col">Your length</th><th scope="col">Length difference</th><th scope="col">Note start</th></tr></thead>
+        <tbody id="noteRows"></tbody></table>
+    </div>
+    <p id="rowLimit" class="hint"></p>
+  </details>
+</section>
+
+<section class="card" aria-labelledby="historyHeading">
+  <div class="row" style="justify-content:space-between">
+    <h2 id="historyHeading" style="margin:0"><span class="step">03</span>Find the recurring spots</h2>
+    <span id="takeCount" class="hint">No takes yet</span>
+  </div>
+  <p class="hint">History for this section, part, and tolerances. Each note is counted only when its timing was assessed.</p>
+  <div id="grid" class="grid" aria-label="Measures in the selected section"></div>
+  <div class="legend"><span>within tolerance</span><span class="swatch" aria-hidden="true"></span><span>recurring timing issue</span></div>
+  <p class="hint">Each measure shows its most recurring note-length or note-start issue. “No data” means unassessed.</p>
+  <div id="detail" class="sub" aria-live="polite">Record a take to start finding patterns.</div>
+</section>
+
+<section class="card session" aria-labelledby="sessionHeading">
+  <h2 id="sessionHeading">Keep your practice</h2>
+  <div class="row">
+    <button id="export" disabled>Save session</button>
+    <label class="file"><input type="file" id="importFile" accept=".json">Load session</label>
+    <button id="reset" disabled>Clear takes</button>
+  </div>
+  <p class="hint">Save before closing. Session files keep the reference, your key presses and releases, and your practice settings.</p>
+</section>
+</main>
+<footer>Measurements follow the reference MIDI’s articulation. A reference with deliberately short or overlapping notes will expect those same lengths.</footer>
+<div id="toast" role="status" hidden></div>
+<script src="piano-core.js"></script>
+<script src="piano-app.js"></script>
+</body>
+</html>
