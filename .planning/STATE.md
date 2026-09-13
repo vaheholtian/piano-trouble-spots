@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Score on Screen
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-09-13T22:48:55.453Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-09-13T23:02:49.307Z"
 last_activity: 2026-09-13
 last_activity_desc: Phase 01 execution started
-state_head: a1b6fb607ad40daa5bafa28aaf19adc1f19e580d
+state_head: 019faf2b6dffcadda754e6703f920043a58daed1
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-13)
 ## Current Position
 
 Phase: 01 (Score on Screen) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-09-13 — Phase 01 execution started
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 25min | 2 tasks | 12 files |
+| Phase 01 P02 | 25min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Score model note ids are structural (m{measure}-s{staff}-v{voice}-b{onset}-p{midi}), reproducible across extractions (D-09)
 - [Phase 01]: Notehead SVG map uses gNote.getNoteheadSVGs()[vfnoteIndex] (per-pitch notehead), never getSVGGElement() (shared chord group) - closes HIGH-severity review finding
 - [Phase 01]: jsdom globals installed via Object.defineProperty with descriptor-preserving restore(), not plain assignment - closes MEDIUM-severity Node 24 navigator review finding
+- [Phase 01]: Rung 2 stored as .xml (not .musicxml) so the ladder covers SCORE-01's third promised extension
+- [Phase 01]: scripts/build-rung5.cjs validates fixture counts in a temp dir before ever touching fixtures/, so a failed export never half-refreshes committed fixtures
+- [Phase 01]: Tie fixture bar 4 uses MuseScore's real stop-before-start note order for the three-segment chain's middle note, exercising the actual continuation-joins-open-tie behavior
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-13T22:48:44.790Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-09-13T23:02:49.277Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
