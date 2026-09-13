@@ -425,14 +425,14 @@ test("rung 1 (right hand C D E F G) produces the exact expected note list", asyn
 | A2 | jsdom `^30` (registry latest) behaves identically to the `29.1.1` actually exercised in this session for the `osmd.load()` parsing-only path | Standard Stack | Low — if the planner pins the exact `29.1.1` used here instead of `^30`, this risk is eliminated entirely; otherwise, a version bump could theoretically change DOMParser/Blob behavior in a way that affects only `render()` (already out of scope for these tests), not `load()` |
 | A3 | `jsdom` as a package name is correct (training knowledge, not sourced from an official OSMD or Node doc) | Standard Stack | Low — confirmed to exist and be legitimate via `package-legitimacy check` and a live `npm view` this session, but per the package-name provenance rule this is still `[ASSUMED]` until read from an authoritative doc |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does `MeasureNumberXML` ever disagree with `MeasureNumber` for the five ladder files?**
+1. **Does `MeasureNumberXML` ever disagree with `MeasureNumber` for the five ladder files?** — RESOLVED: Plan 01-01 uses `MeasureNumberXML`; the rung 1–5 fixture tests assert exact measure numbers, so any discrepancy fails a test.
    - What we know: `MeasureNumberXML` reads the literal `<measure number="...">` attribute (confirmed this session: `MeasureNumberXML: 1` for `<measure number="1">`); `MeasureNumber` is a separate getter/setter that may apply internal renumbering logic (not investigated — its purpose is undocumented in the `.d.ts` beyond "The unique measure list index").
    - What's unclear: whether any real-world MuseScore export (rung 5) could produce a case where these two differ within the four populated measures.
    - Recommendation: use `MeasureNumberXML` per D-10's literal wording ("follows the MusicXML `number` attribute"); the D-07 fixture test for rung 5 will surface any discrepancy immediately since it asserts exact expected measure numbers.
 
-2. **Exact string format `Pitch.ToStringShort()` produces for accidentals and how it should feed "pitch name and MIDI number" in the D-12 inspect table.**
+2. **Exact string format `Pitch.ToStringShort()` produces for accidentals and how it should feed "pitch name and MIDI number" in the D-12 inspect table.** — RESOLVED: planning probes pinned MIDI = `halfTone + 12` (middle C = 60) and `ToStringShort(3)` → `C4`, `F#5`, `Eb3`; Plan 01-01 tests both.
    - What we know: `ToStringShort()` exists and returns a short representation like "A4 (A, octave 4), Ab5 or C#4" per its own doc comment; `halfTone` gives a transposed half-tone number directly usable as a MIDI-adjacent value (not confirmed this session to be exactly MIDI note number 0–127 — OSMD's internal octave numbering in this session's probe printed "octave: 2" for what MusicXML called `<octave>5</octave>`, an offset worth confirming precisely before wiring the inspect table's "MIDI number" column).
    - What's unclear: the exact halfTone-to-MIDI-note-number mapping/offset.
    - Recommendation: the D-12 table's "pitch name" column can use `ToStringShort()` directly; before wiring "MIDI number," write a tiny fixture assertion (part of the D-07 tests) pinning a known note (e.g., middle C) to its expected MIDI number (60) against `note.halfTone`, and derive the offset empirically from that rather than assuming.
