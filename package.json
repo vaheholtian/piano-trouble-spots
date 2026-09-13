@@ -1,0 +1,13 @@
+{
+  "name": "piano-mistakes",
+  "private": true,
+  "scripts": {
+    "test": "node --test \"test/*.test.cjs\"",
+    "check": "node scripts/check-run-path.cjs",
+    "check:map": "node scripts/check-svg-map.cjs"
+  },
+  "devDependencies": {
+    "opensheetmusicdisplay": "2.1.2",
+    "jsdom": "29.1.1"
+  }
+}
