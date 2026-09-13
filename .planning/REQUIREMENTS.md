@@ -11,9 +11,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Score
 
-- [ ] **SCORE-01**: User can open a MusicXML file (`.musicxml`, `.xml`, or compressed `.mxl` exported from MuseScore) and see it rendered as real notation in Chrome
+- [x] **SCORE-01**: User can open a MusicXML file (`.musicxml`, `.xml`, or compressed `.mxl` exported from MuseScore) and see it rendered as real notation in Chrome
 - [ ] **SCORE-02**: User can select a passage as a start bar and end bar, and the selected bars are visibly highlighted on the notation (Phase 6; until then the whole loaded file is the passage)
-- [ ] **SCORE-03**: The internal score model carries measure, staff, voice, onset in beats, duration, pitch, and resolved ties for every note, so hand or staff filtering can be added later without a data-model change
+- [x] **SCORE-03**: The internal score model carries measure, staff, voice, onset in beats, duration, pitch, and resolved ties for every note, so hand or staff filtering can be added later without a data-model change
 
 ### Capture
 
@@ -97,9 +97,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCORE-01 | Phase 1 | Pending |
+| SCORE-01 | Phase 1 | Complete |
 | SCORE-02 | Phase 6 | Pending |
-| SCORE-03 | Phase 1 | Pending |
+| SCORE-03 | Phase 1 | Complete |
 | CAPT-01 | Phase 2 | Pending |
 | CAPT-02 | Phase 2 | Pending |
 | CAPT-03 | Phase 2 | Pending |
@@ -117,6 +117,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VRFY-01 | Phase 7 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 18 total
 - Mapped to phases: 18
 - Unmapped: 0 ✓
