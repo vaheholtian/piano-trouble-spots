@@ -50,12 +50,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The five-file verification ladder exists in the repo and every file renders with the right notes on the right staff
   4. User sat at the FP-60X with the laptop and loaded each ladder file
 
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Tracer: rung 1 through the real OSMD parser into the plain score model (node:test), then the double-click index.html slice with the inspect table and the noteId to SVG map
+- [x] 01-01-PLAN.md — Tracer: rung 1 through the real OSMD parser into the plain score model (node:test), then the double-click index.html slice with the inspect table and the noteId to SVG map
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -170,7 +170,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Score on Screen | 0/3 | Not started | - |
+| 1. Score on Screen | 1/3 | In Progress|  |
 | 2. Click and Capture | 0/TBD | Not started | - |
 | 3. What You Actually Played | 0/TBD | Not started | - |
 | 4. Early and Late | 0/TBD | Not started | - |

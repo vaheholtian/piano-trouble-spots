@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
 current_phase: 01
-current_phase_name: score-on-screen
+current_phase_name: Score on Screen
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-09-13T20:54:16.015Z"
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-09-13T22:48:55.453Z"
 last_activity: 2026-09-13
-last_activity_desc: "Roadmap reshaped during Phase 1 discussion: 7 phases, bar selection moved to Phase 6, verification ladder added"
-state_head: 38206e3585e818cb017ccad8f3b9c815bef4b1d7
+last_activity_desc: Phase 01 execution started
+state_head: a1b6fb607ad40daa5bafa28aaf19adc1f19e580d
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-13)
 
 **Core value:** After many repetitions of a passage, the score shows the handful of spots and habits worth working on, with enough repetitions behind each one that the pianist trusts it.
-**Current focus:** Phase 1 — Score on Screen
+**Current focus:** Phase 01 — Score on Screen
 
 ## Current Position
 
-Phase: 01 (score-on-screen) — READY TO EXECUTE
-Plan: 0 of TBD in current phase
+Phase: 01 (Score on Screen) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-09-13 — Roadmap reshaped during Phase 1 discussion: 7 phases, bar selection moved to Phase 6, verification ladder added
+Last activity: 2026-09-13 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 25min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -66,6 +71,9 @@ Recent decisions affecting current work:
 - [Roadmap]: Durable storage (HIST-01) lands in Phase 2 with capture, not later — raw MIDI events are the source of truth and must never be lost to a closed tab
 - [Roadmap]: Alignment (Phase 3) and timing (Phase 4) are separate phases so the alignment algorithm is proven at the piano before anything is built on top of it
 - [Roadmap]: v2 items (per-bar tempo drift, relative dynamics, hands-separate, playback) stay out of all six phases
+- [Phase 01]: Score model note ids are structural (m{measure}-s{staff}-v{voice}-b{onset}-p{midi}), reproducible across extractions (D-09)
+- [Phase 01]: Notehead SVG map uses gNote.getNoteheadSVGs()[vfnoteIndex] (per-pitch notehead), never getSVGGElement() (shared chord group) - closes HIGH-severity review finding
+- [Phase 01]: jsdom globals installed via Object.defineProperty with descriptor-preserving restore(), not plain assignment - closes MEDIUM-severity Node 24 navigator review finding
 
 ### Pending Todos
 
@@ -86,6 +94,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-13T19:06:38.382Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-score-on-screen/01-CONTEXT.md
+Last session: 2026-09-13T22:48:44.790Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
