@@ -271,6 +271,137 @@ test('rung 1 loaded as a File (the browser handoff) equals rung 1 loaded as text
   assert.deepEqual(fileModel, textModel);
 });
 
+const EXPECTED_TIE = [
+  [1, '0/1', 1, 1, 'C4', 60, '4/1'],
+  [2, '0/1', 1, 1, 'E4', 64, '2/1'],
+  [2, '2/1', 1, 1, 'G4', 67, '6/1'],
+  [4, '0/1', 1, 1, 'A4', 69, '8/1'],
+];
+
+test('a tied pair collapses to one note with the combined duration, within a bar and across a barline', async () => {
+  const sheet = await loadSheet(readFixture('test/fixtures/tie.musicxml'));
+  const model = M.extract(sheet);
+  assert.deepEqual(rowsOf(model), EXPECTED_TIE);
+  assert.deepEqual(model.notes.map((n) => n.tiedNoteCount), [2, 1, 2, 3]);
+  assert.equal(model.notes.length, 4);
+  const writtenNoteheads = (readFixture('test/fixtures/tie.musicxml').match(/<pitch>/g) || []).length;
+  assert.equal(writtenNoteheads, 8);
+  assert.deepEqual(model.notes.map((n) => n.id), [
+    'm1-s1-v1-b0_1-p60',
+    'm2-s1-v1-b0_1-p64',
+    'm2-s1-v1-b2_1-p67',
+    'm4-s1-v1-b0_1-p69',
+  ]);
+  assert.deepEqual(model.measures, [
+    { number: 1, start: { num: 0, den: 1, beats: 0 }, length: { num: 4, den: 1, beats: 4 }, timeSignature: { beats: 4, beatType: 4 } },
+    { number: 2, start: { num: 4, den: 1, beats: 4 }, length: { num: 4, den: 1, beats: 4 }, timeSignature: { beats: 4, beatType: 4 } },
+    { number: 3, start: { num: 8, den: 1, beats: 8 }, length: { num: 4, den: 1, beats: 4 }, timeSignature: { beats: 4, beatType: 4 } },
+    { number: 4, start: { num: 12, den: 1, beats: 12 }, length: { num: 4, den: 1, beats: 4 }, timeSignature: { beats: 4, beatType: 4 } },
+    { number: 5, start: { num: 16, den: 1, beats: 16 }, length: { num: 4, den: 1, beats: 4 }, timeSignature: { beats: 4, beatType: 4 } },
+  ]);
+});
+
+test('a three-segment tie chain folds into one onset with the total duration', async () => {
+  const sheet = await loadSheet(readFixture('test/fixtures/tie.musicxml'));
+  const model = M.extract(sheet);
+  const a4 = model.notes.find((n) => n.pitch.name === 'A4');
+  assert.deepEqual(a4.onset, { num: 0, den: 1, beats: 0 });
+  assert.deepEqual(a4.duration, { num: 8, den: 1, beats: 8 });
+  assert.equal(a4.tiedNoteCount, 3); // three-segment chain: tiedNoteCount: 3
+  assert.equal(model.notes.filter((n) => n.measure === 5).length, 0);
+  assert.equal(model.notes.filter((n) => n.measure === 4).length, 1);
+});
+
+test('toQuarterBeats is exact for every note value in the ladder', () => {
+  const OSMD = require('opensheetmusicdisplay/build/opensheetmusicdisplay.min.js');
+  const { Fraction } = OSMD;
+  assert.deepEqual(M.toQuarterBeats(new Fraction(0, 1, 1)), { num: 4, den: 1, beats: 4 }); // whole
+  assert.deepEqual(M.toQuarterBeats(new Fraction(1, 2)), { num: 2, den: 1, beats: 2 }); // half
+  assert.deepEqual(M.toQuarterBeats(new Fraction(1, 4)), { num: 1, den: 1, beats: 1 }); // quarter
+  assert.deepEqual(M.toQuarterBeats(new Fraction(1, 8)), { num: 1, den: 2, beats: 0.5 }); // eighth
+  assert.deepEqual(M.toQuarterBeats(new Fraction(3, 8)), { num: 3, den: 2, beats: 1.5 }); // dotted quarter
+  assert.deepEqual(M.toQuarterBeats(new Fraction(3, 16)), { num: 3, den: 4, beats: 0.75 }); // dotted eighth
+  assert.deepEqual(M.toQuarterBeats(new Fraction(12, 8)), { num: 6, den: 1, beats: 6 }); // unreduced whole-note fraction
+  assert.deepEqual(M.addRationals({ num: 1, den: 2, beats: 0.5 }, { num: 1, den: 3, beats: 0.333 }), { num: 5, den: 6, beats: 5 / 6 });
+  assert.equal(M.compareRationals({ num: 1, den: 2 }, { num: 2, den: 4 }), 0);
+  assert.ok(M.compareRationals({ num: 5, den: 2 }, { num: 3, den: 1 }) < 0);
+});
+
+test('a rest-only file yields no notes but still lists its measure', async () => {
+  const restOnlyXml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>2</divisions>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <staves>2</staves>
+        <clef number="1"><sign>G</sign><line>2</line></clef>
+        <clef number="2"><sign>F</sign><line>4</line></clef>
+      </attributes>
+      <note><rest measure="yes"/><duration>8</duration><voice>1</voice><staff>1</staff></note>
+      <backup><duration>8</duration></backup>
+      <note><rest measure="yes"/><duration>8</duration><voice>5</voice><staff>2</staff></note>
+    </measure>
+  </part>
+</score-partwise>`;
+  const sheet = await loadSheet(restOnlyXml);
+  const model = M.extract(sheet);
+  assert.deepEqual(model.notes, []);
+  assert.equal(model.measures.length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(model)), model);
+});
+
+test('a chord that repeats a pitch is rejected, not silently merged', async () => {
+  const dupXml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>2</divisions>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>quarter</type></note>
+      <note><chord/><pitch><step>C</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>quarter</type></note>
+      <note><rest/><duration>6</duration><voice>1</voice></note>
+    </measure>
+  </part>
+</score-partwise>`;
+  const sheet = await loadSheet(dupXml);
+  assert.throws(() => M.extract(sheet), /Duplicate note id m1-s1-v1-b0_1-p60/);
+});
+
+test('extract has no DOM dependency', async () => {
+  const sheet = await loadSheet(readFixture('fixtures/01-right-hand.musicxml'));
+  const keys = ['document', 'window', 'navigator'];
+  const saved = new Map();
+  for (const key of keys) {
+    saved.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
+  }
+  try {
+    for (const key of keys) {
+      delete globalThis[key];
+    }
+    const model = M.extract(sheet);
+    assert.equal(model.notes.length, 5);
+  } finally {
+    for (const key of keys) {
+      const descriptor = saved.get(key);
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+    }
+  }
+});
+
+test('TieTypes is never consulted', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'score-model.js'), 'utf8');
+  assert.equal(source.includes('TieTypes'), false);
+});
+
 test('the jsdom shim installs globals with defineProperty and restores the previous descriptors', () => {
   assert.equal(Object.getOwnPropertyDescriptor(globalThis, 'navigator').value, env.dom.window.navigator);
   const nested = installOsmdNodeEnv();
