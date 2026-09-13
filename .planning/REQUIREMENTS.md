@@ -96,30 +96,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCORE-01 | — | Pending |
-| SCORE-02 | — | Pending |
-| SCORE-03 | — | Pending |
-| CAPT-01 | — | Pending |
-| CAPT-02 | — | Pending |
-| CAPT-03 | — | Pending |
-| CAPT-04 | — | Pending |
-| CAPT-05 | — | Pending |
-| ANLZ-01 | — | Pending |
-| ANLZ-02 | — | Pending |
-| ANLZ-03 | — | Pending |
-| AGGR-01 | — | Pending |
-| AGGR-02 | — | Pending |
-| AGGR-03 | — | Pending |
-| HIST-01 | — | Pending |
-| HIST-02 | — | Pending |
-| HIST-03 | — | Pending |
-| VRFY-01 | — | Pending |
+| SCORE-01 | Phase 1 | Pending |
+| SCORE-02 | Phase 1 | Pending |
+| SCORE-03 | Phase 1 | Pending |
+| CAPT-01 | Phase 2 | Pending |
+| CAPT-02 | Phase 2 | Pending |
+| CAPT-03 | Phase 2 | Pending |
+| CAPT-04 | Phase 2 | Pending |
+| CAPT-05 | Phase 2 | Pending |
+| ANLZ-01 | Phase 3 | Pending |
+| ANLZ-02 | Phase 4 | Pending |
+| ANLZ-03 | Phase 3 | Pending |
+| AGGR-01 | Phase 5 | Pending |
+| AGGR-02 | Phase 5 | Pending |
+| AGGR-03 | Phase 5 | Pending |
+| HIST-01 | Phase 2 | Pending |
+| HIST-02 | Phase 6 | Pending |
+| HIST-03 | Phase 6 | Pending |
+| VRFY-01 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0 ✓
+
+Note: VRFY-01 (verify at the piano) is mapped to Phase 6 so it appears exactly once, but it is enforced in every phase — each phase in ROADMAP.md carries "user tried it at the FP-60X over USB" as an explicit success criterion.
 
 ---
 *Requirements defined: 2026-09-13*
-*Last updated: 2026-09-13 after initial definition*
+*Last updated: 2026-09-13 after roadmap creation (traceability mapped)*
