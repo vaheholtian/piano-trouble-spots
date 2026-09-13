@@ -99,7 +99,11 @@
     <label class="field" style="margin-top:12px">Reference part<select id="track" disabled><option value="all">All tracks</option></select></label>
     <div class="section-readout">
       <p id="sectionSummary" class="sub">Load a MIDI file to choose a section.</p>
-      <p class="hint">Timing follows the MIDI file, including its tempo changes.</p>
+      <div class="row">
+        <button id="play" disabled>Hear this section</button>
+        <span id="playStatus" class="hint" role="status"></span>
+      </div>
+      <p class="hint">Timing follows the MIDI file, including its tempo changes. Playback is a plain synthesised tone at the reference timing, for the chosen part; it is not a piano recording.</p>
     </div>
   </section>
   <section class="card" aria-labelledby="takeHeading">

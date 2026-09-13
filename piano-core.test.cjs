@@ -156,6 +156,17 @@ test('reference notes with no release are rejected for duration practice', () =>
 test('truncated MIDI is rejected', () => {
   assert.throws(() => C.parseMidi(midi([quarterNote]).slice(0, -3)), /Truncated/);
 });
+test('deeply overlapped repeats of one key pair in order without quadratic slowdown', () => {
+  const n = 100000, events = [];
+  for (let i = 0; i < n; i++) events.push(0, 144, 60, 80);
+  for (let i = 0; i < n; i++) events.push(1, 128, 60, 0);
+  events.push(...ending);
+  const started = Date.now(), parsed = C.parseMidi(midi([events])), elapsed = Date.now() - started;
+  assert.equal(parsed.notes.length, n);
+  near(parsed.notes[0].on, 0); near(parsed.notes[0].off, .5 / 480);
+  near(parsed.notes[n - 1].on, 0); near(parsed.notes[n - 1].off, n * .5 / 480);
+  assert.ok(elapsed < 4000, 'parsing took ' + elapsed + 'ms; the release queue is no longer amortised');
+});
 test('session round trip preserves raw releases and recomputes analysis', () => {
   const s = song(), notes = play(s.notes); notes[2].off = null;
   const t = take(s, notes); t.analysis = {untrusted: 'should never be rendered'};
@@ -168,4 +179,47 @@ test('malformed and earlier session formats are rejected before application stat
   assert.throws(() => C.readSession(JSON.stringify({song: song(), takes: []})), /earlier pitch tracker/);
   assert.throws(() => C.readSession(JSON.stringify({version: 2, song: song(), settings, takes: [{}]})), /Invalid recorded take/);
   assert.throws(() => C.readSession(JSON.stringify({version: 2, song: song(), settings: {...settings, startBar: 0}, takes: []})), /Invalid practice settings/);
+});
+
+test('invalid reference channels and backward measure/beat ordering are rejected', () => {
+  for (const channel of [undefined, -1, 9, 16, {}]) {
+    const s = song(); s.notes[0].channel = channel;
+    assert.throws(() => C.validateSong(s), /Invalid reference note/);
+  }
+  const s = song(Array(8).fill(60)); s.notes[4].bar = 1; s.notes[5].bar = 1; s.notes[5].beat = 1;
+  assert.throws(() => C.validateSong(s), /Invalid reference note/);
+  const wrongEnd = song(); wrongEnd.nBars = 2;
+  assert.throws(() => C.validateSong(wrongEnd), /final reference measure/);
+});
+
+test('session import handles null and strips untrusted extra properties', () => {
+  assert.throws(() => C.readSession('null'), /Invalid session data/);
+  const s = song(), notes = play(s.notes); s.extra = 'discard'; s.notes[0].extra = 'discard'; notes[0].extra = 'discard';
+  const restored = C.readSession(JSON.stringify({version: 2, song: s, settings: {...settings, extra: 'discard'}, takes: [take(s, notes)]}));
+  assert.equal(restored.song.extra, undefined); assert.equal(restored.song.notes[0].extra, undefined);
+  assert.equal(restored.settings.extra, undefined); assert.equal(restored.takes[0].notes[0].extra, undefined);
+});
+
+test('session-wide note limit is checked before expensive analysis', () => {
+  const s = song(), notes = play(s.notes);
+  const tooMany = Array(11).fill({...take(s, notes), notes: Array(C.limits.notesPerTake).fill(notes[0])});
+  assert.throws(() => C.readSession(JSON.stringify({version: 2, song: s, settings, takes: tooMany})), /recorded-note limit/);
+});
+
+test('format zero MIDI cannot contain multiple tracks', () => {
+  const data = new Uint8Array(midi([quarterNote, quarterNote])); data[9] = 0;
+  assert.throws(() => C.parseMidi(data.buffer), /format 0 or 1/);
+});
+
+test('dense repeated passages preserve exact matching, omissions, and ambiguity', () => {
+  const count = 20000;
+  const s = {name: 'Dense passage', nBars: 4, notes: Array.from({length: count}, (_, i) =>
+    ({pitch: 21 + i % 88, on: i * .01, off: i * .01 + .005, channel: 0, track: 0, bar: 1 + Math.floor(i / 5000), beat: 1}))};
+  const notes = play(s.notes).filter((_, i) => i !== 100);
+  notes.push({...notes[199], on: notes[199].on + .01, off: notes[199].off + .01});
+  notes.sort((a, b) => a.on - b.on);
+  const result = C.analyze(s, settings, notes);
+  assert.equal(result.observations.length, count - 2);
+  assert.equal(result.unassessed, 2); assert.equal(result.unusedPlayed, 2);
+  near(result.medianAttackMs, 0); near(result.medianLengthMs, 0);
 });

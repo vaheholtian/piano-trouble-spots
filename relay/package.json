@@ -1,0 +1,16 @@
+{
+  "name": "trouble-spots-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Serves the Trouble spots page on the LAN and forwards this computer's MIDI inputs to browsers without Web MIDI.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test server.test.cjs"
+  },
+  "engines": {"node": ">=18"},
+  "dependencies": {
+    "@julusian/midi": "^3.6.1",
+    "ws": "^8.18.3"
+  }
+}
