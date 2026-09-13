@@ -45,7 +45,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Every note in the file carries a stable id plus measure, staff, voice, onset in beats, duration, pitch, and resolved ties — inspectable in the app for the loaded file, so hand/staff filtering and bar selection can be added later without a data-model change
   3. The five-file verification ladder exists in the repo and every file renders with the right notes on the right staff
   4. User sat at the FP-60X with the laptop and loaded each ladder file
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Tracer: rung 1 through the real OSMD parser into the plain score model (node:test), then the double-click index.html slice with the inspect table and the noteId to SVG map
+- [ ] 01-02-PLAN.md — Ladder rungs 2-5 as fixtures with exact note-list tests, rung 5 built from MuseScore (.musicxml and .mxl), tie fixture and model-contract tests
+- [ ] 01-03-PLAN.md — Phase gate (full suite, file:// run-path checks, ladder manifest) and the blocking at-the-piano checkpoint
 **UI hint**: yes
 
 ### Phase 2: Click and Capture
@@ -133,7 +138,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Score on Screen | 0/TBD | Not started | - |
+| 1. Score on Screen | 0/3 | Not started | - |
 | 2. Click and Capture | 0/TBD | Not started | - |
 | 3. What You Actually Played | 0/TBD | Not started | - |
 | 4. Early and Late | 0/TBD | Not started | - |
