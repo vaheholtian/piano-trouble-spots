@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Piano Mistakes</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 16px; }
+  header { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+  label.file { border: 1px solid #888; border-radius: 4px; padding: 6px 10px; cursor: pointer; }
+  label.file input { display: none; }
+  #notation { width: 100%; margin-bottom: 16px; }
+  table { border-collapse: collapse; font-family: ui-monospace, "Consolas", monospace; }
+  th, td { padding: 4px; border-bottom: 1px solid #ddd; text-align: left; }
+  .missing { color: #b00000; font-weight: bold; }
+  #toast { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px; background: #b00000; color: #fff; }
+  #toast[hidden] { display: none; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@2.1.2/build/opensheetmusicdisplay.min.js"></script>
+</head>
+<body>
+<header>
+  <label class="file"><input type="file" id="pieceFile" accept=".musicxml,.xml,.mxl">Open MusicXML</label>
+  <span id="status">No piece loaded</span>
+</header>
+<div id="toast" hidden></div>
+<div id="notation"></div>
+<details id="inspect" open>
+  <summary id="inspectSummary">Notes</summary>
+  <button id="copyJson" type="button">Copy model as JSON</button>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Bar</th>
+        <th>Staff</th>
+        <th>Voice</th>
+        <th>Onset (beats)</th>
+        <th>Duration (beats)</th>
+        <th>Pitch</th>
+        <th>MIDI</th>
+        <th>Tie</th>
+        <th>Notehead</th>
+      </tr>
+    </thead>
+    <tbody id="noteRows"></tbody>
+  </table>
+</details>
+<script src="src/score-model.js"></script>
+<script src="src/inspect-table.js"></script>
+<script src="src/score-renderer.js"></script>
+</body>
+</html>
