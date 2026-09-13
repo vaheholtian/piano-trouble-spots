@@ -12,7 +12,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Score
 
 - [ ] **SCORE-01**: User can open a MusicXML file (`.musicxml`, `.xml`, or compressed `.mxl` exported from MuseScore) and see it rendered as real notation in Chrome
-- [ ] **SCORE-02**: User can select a passage as a start bar and end bar, and the selected bars are visibly highlighted on the notation
+- [ ] **SCORE-02**: User can select a passage as a start bar and end bar, and the selected bars are visibly highlighted on the notation (Phase 6; until then the whole loaded file is the passage)
 - [ ] **SCORE-03**: The internal score model carries measure, staff, voice, onset in beats, duration, pitch, and resolved ties for every note, so hand or staff filtering can be added later without a data-model change
 
 ### Capture
@@ -44,6 +44,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Verification
 
 - [ ] **VRFY-01**: Every phase ends with the user trying the delivered slice at the Roland FP-60X over USB before the phase counts as done
+- Verification ladder: five tiny MusicXML files made in MuseScore (right hand C D E F G, left hand same, both hands, a chord or two, four real bars) are kept in the repo and used at the piano for Phases 1 to 5, so detection accuracy is checked on scores where every note can be verified by eye
 
 ## v2 Requirements
 
@@ -97,7 +98,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SCORE-01 | Phase 1 | Pending |
-| SCORE-02 | Phase 1 | Pending |
+| SCORE-02 | Phase 6 | Pending |
 | SCORE-03 | Phase 1 | Pending |
 | CAPT-01 | Phase 2 | Pending |
 | CAPT-02 | Phase 2 | Pending |
@@ -111,17 +112,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGGR-02 | Phase 5 | Pending |
 | AGGR-03 | Phase 5 | Pending |
 | HIST-01 | Phase 2 | Pending |
-| HIST-02 | Phase 6 | Pending |
-| HIST-03 | Phase 6 | Pending |
-| VRFY-01 | Phase 6 | Pending |
+| HIST-02 | Phase 7 | Pending |
+| HIST-03 | Phase 7 | Pending |
+| VRFY-01 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total
 - Mapped to phases: 18
 - Unmapped: 0 ✓
 
-Note: VRFY-01 (verify at the piano) is mapped to Phase 6 so it appears exactly once, but it is enforced in every phase — each phase in ROADMAP.md carries "user tried it at the FP-60X over USB" as an explicit success criterion.
+Note: VRFY-01 (verify at the piano) is mapped to Phase 7 so it appears exactly once, but it is enforced in every phase — each phase in ROADMAP.md carries "user tried it at the FP-60X over USB" as an explicit success criterion.
 
 ---
 *Requirements defined: 2026-09-13*
-*Last updated: 2026-09-13 after roadmap creation (traceability mapped)*
+*Last updated: 2026-09-13 after Phase 1 discussion (bar selection moved to Phase 6, verification ladder added)*

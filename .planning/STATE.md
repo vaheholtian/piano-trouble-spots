@@ -2,7 +2,7 @@
 gsd_state_version: '1.0'
 status: planning
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,10 +20,10 @@ See: .planning/PROJECT.md (updated 2026-09-13)
 
 ## Current Position
 
-Phase: 1 of 6 (Score on Screen)
+Phase: 1 of 7 (Score on Screen)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-09-13 — Roadmap created, 18 v1 requirements mapped across 6 phases
+Last activity: 2026-09-13 — Roadmap reshaped during Phase 1 discussion: 7 phases, bar selection moved to Phase 6, verification ladder added
 
 Progress: [░░░░░░░░░░] 0%
 

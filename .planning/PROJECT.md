@@ -47,7 +47,7 @@ After many repetitions of a passage, the score shows the handful of spots and ha
 
 - **The prototype failed on product, not code.** A timing-only tool at tag `v0-prototype` (kept under `prototype/`) anchored on the first note, assumed the MIDI's exact tempo, refused to score wrong notes, and had no visual on the score. Several sessions went into a phone relay, Bluetooth pairing, and hardening instead of one real practice session. Its MIDI parser and relay are reusable reference material; its design is not the base for this build.
 - **The user's practice pattern.** Mistakes are numerous, so a single pass is not representative. The user repeats a passage easily more than 20 times and wants to be told "on this bar you slow down", "you press that E too hard", "you keep missing a note in that chord".
-- **Progression the user asked for.** Start simple: manual pass marking, metronome first, passages before whole piece. Do not rush the steps.
+- **Progression the user asked for.** Start simple: manual pass marking, metronome first, passages before whole piece. Do not rush the steps. Concretely: right hand C D E F G, then left hand, then both hands, then chords, then four real bars, and only then a whole piece with bar selection. No repeat signs or endings in this milestone.
 - **Hardware.** Roland FP-60X connected over USB to a Windows 11 laptop running Chrome. Chrome exposes Web MIDI with timestamps and velocities.
 - **Score availability.** The user can supply pieces as MusicXML, MIDI, or PDF. MusicXML chosen because it carries bars, staves, voices, and ties, and renders as real notation with existing libraries.
 - **Success in a month.** The user opens it every session, identifies where they played wrong without a tutor, and fixes those mistakes.
@@ -70,6 +70,7 @@ After many repetitions of a passage, the score shows the handful of spots and ha
 | Relative dynamics only | User wants "that E is louder than its neighbours", not comparison to a reference performance | — Pending |
 | Browser-only, local storage, file export | Zero friction to open; no infrastructure; tablet or sync can be added later without rework of the analysis | — Pending |
 | Passages before whole piece | User explicitly does not want to rush; prove the loop on a few bars first | — Pending |
+| Tiny test-score ladder before real pieces | Detection accuracy comes first; each rung is a MusicXML file made in MuseScore (right hand C D E F G, left hand, both hands, chords, four real bars) where every note can be verified by eye, and the whole file is the passage until the aggregate is trusted; bar selection and real pieces wait for Phase 6 | — Pending |
 | Restart from scratch rather than extend the prototype | The prototype's fixed-tempo, timing-only design and lack of score display were the failure, not its code quality | — Pending |
 
 ## Evolution
@@ -90,4 +91,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-13 after initialization*
+*Last updated: 2026-09-13 after Phase 1 discussion*
