@@ -40,7 +40,15 @@ created: "2026-09-13"
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 2-01-01 | 01 | 1 | REQ-{XX} | T-2-01 / — | {expected secure behavior or "N/A"} | unit | `{command}` | ✅ / ❌ W0 | ⬜ pending |
+| 2-01-01 | 01 | 1 | CAPT-01, CAPT-02, CAPT-05, HIST-01 | — | N/A | integration (real headless Chrome over CDP, fake MIDI input, reload) | `node scripts/check-capture-roundtrip.cjs` | ❌ created by this task | ⬜ pending |
+| 2-01-02 | 01 | 1 | CAPT-01, CAPT-05, HIST-01 | — | N/A | unit (fake-indexeddb) | `node --test test/midi-capture.test.cjs test/storage.test.cjs` | ❌ created by this task | ⬜ pending |
+| 2-02-01 | 02 | 2 | CAPT-03 | — | N/A | integration (click timeline + clock pairs after reload) | `node scripts/check-capture-roundtrip.cjs` | ✅ (extended) | ⬜ pending |
+| 2-02-02 | 02 | 2 | CAPT-02, CAPT-03 | — | N/A | unit | `node --test test/clock.test.cjs test/metronome.test.cjs` | ❌ created by this task | ⬜ pending |
+| 2-03-01 | 03 | 3 | CAPT-04, CAPT-05, HIST-01 | — | N/A | integration (pair marks, reload mid-session) | `node scripts/check-capture-roundtrip.cjs` | ✅ (extended) | ⬜ pending |
+| 2-03-02 | 03 | 3 | CAPT-04 | — | N/A | unit | `node --test test/pass-marker.test.cjs test/pass-segmenter.test.cjs` | ❌ created by this task | ⬜ pending |
+| 2-04-01 | 04 | 4 | CAPT-01..05, HIST-01 | — | N/A | gate | `npm test`; `node scripts/check-run-path.cjs --fixtures`; `node scripts/check-svg-map.cjs`; `node scripts/check-capture-roundtrip.cjs` | ✅ | ⬜ pending |
+| 2-04-02 | 04 | 4 | CAPT-01, CAPT-02, CAPT-03 | — | N/A | manual (checkpoint:human-verify, blocking-human) | — | n/a | ⬜ pending |
+| 2-04-03 | 04 | 4 | CAPT-04, CAPT-05, HIST-01 | — | N/A | manual (checkpoint:human-verify, blocking-human) | — | n/a | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -48,11 +56,13 @@ created: "2026-09-13"
 
 ## Wave 0 Requirements
 
-- [ ] `{tests/test_file.py}` — stubs for REQ-{XX}
-- [ ] `{tests/conftest.py}` — shared fixtures
-- [ ] `{framework install}` — if no framework detected
+- [ ] `scripts/check-capture-roundtrip.cjs` — created by the plan 01 tracer (2-01-01), extended by 2-02-01 and 2-03-01; the end-to-end gate every wave runs
+- [ ] `test/idb-node-env.cjs`, `test/midi-capture.test.cjs`, `test/storage.test.cjs` — created by 2-01-02 in the same task as the contracts they pin
+- [ ] `test/clock.test.cjs`, `test/metronome.test.cjs` — created by 2-02-02
+- [ ] `test/pass-marker.test.cjs`, `test/pass-segmenter.test.cjs` — created by 2-03-02
+- [ ] Framework install: `npm install -D idb@8.0.3 fake-indexeddb@6.2.5` (2-01-02); node:test and the CDP headless pattern already exist from Phase 1
 
-*If none: "Existing infrastructure covers all phase requirements."*
+No separate Wave 0 plan: each test file is created inside the task whose code it pins, and every task carries a runnable `<automated>` verify from its first commit.
 
 ---
 
@@ -60,9 +70,10 @@ created: "2026-09-13"
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| {behavior} | REQ-{XX} | {reason} | {steps} |
-
-*If none: "All phase behaviors have automated verification."*
+| Notes played on the click read a near-zero median offset in the readout (MIDI clock vs AudioContext clock relationship) | CAPT-03, CAPT-02 (roadmap criterion 2) | Needs the real FP-60X, real audio output and human timing; headless Chrome has neither | Plan 04 Task 2, Scenario A steps 2-4: BPM 80, play C4 on the click 8 times, write down the median and both latency numbers |
+| The click does not drift with the tab in the background for three minutes | CAPT-03 (PITFALLS 8, research P2-2) | Chrome's throttling policy is observable only in a real foreground/background switch over minutes | Plan 04 Task 2, Scenario A step 5 |
+| MIDI permission remembered for the file:// origin across a full Chrome restart | CAPT-01 (research A1) | Site-settings persistence is Chrome-profile behaviour, not page code | Plan 04 Task 2, Scenario A step 6 (recorded either way) |
+| A real 10+ pass drill is captured with nothing missing, the pedal never splits a pass, an abrupt tab close loses nothing | CAPT-04, CAPT-05, HIST-01 (roadmap criterion 5; the HIST-01 unclassified probe row) | Real hardware, real key pair, real process teardown | Plan 04 Task 3, Scenario B steps 1-6 |
 
 ---
 

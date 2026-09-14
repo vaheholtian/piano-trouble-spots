@@ -81,7 +81,24 @@ Plans:
   4. Closing the tab and reopening restores the piece, the passage, and every recorded repetition with its raw note-on, note-off, velocity, and timestamp data unmodified
   5. User ran a real 10+ pass drill at the FP-60X over USB on a ladder file and every pass was captured as its own repetition with nothing missing
 
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Tracer: pick the MIDI input, write every raw message to IndexedDB as it arrives, reopen restores the piece and the events unmodified (headless Chrome from file://); decode table and storage schema pinned with node:test
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-02-PLAN.md — Web Audio look-ahead click with beat-1 accent, click timeline and clock pair stored per session, live clock readout (offset, median, latency), calibration on the session, BPM per piece and mid-session change
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-03-PLAN.md — B7+C8 and spacebar pass marking as marker records in the raw stream, pure detector and segmenter, live pass list with note counts, interrupted-session restore
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 02-04-PLAN.md — Phase gate (all node/npm checks, piano checklist) and the two blocking at-the-piano checkpoints: clock relationship, 10+ pass drill
 
 ### Phase 3: What You Actually Played
 
@@ -171,7 +188,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Score on Screen | 3/3 | Complete    | 2026-09-13 |
-| 2. Click and Capture | 0/TBD | Not started | - |
+| 2. Click and Capture | 0/4 | Not started | - |
 | 3. What You Actually Played | 0/TBD | Not started | - |
 | 4. Early and Late | 0/TBD | Not started | - |
 | 5. Habits, Not Slips | 0/TBD | Not started | - |
