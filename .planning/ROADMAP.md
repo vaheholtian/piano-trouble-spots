@@ -81,12 +81,12 @@ Plans:
   4. Closing the tab and reopening restores the piece, the passage, and every recorded repetition with its raw note-on, note-off, velocity, and timestamp data unmodified
   5. User ran a real 10+ pass drill at the FP-60X over USB on a ladder file and every pass was captured as its own repetition with nothing missing
 
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Tracer: pick the MIDI input, write every raw message to IndexedDB as it arrives, reopen restores the piece and the events unmodified (headless Chrome from file://); decode table and storage schema pinned with node:test
+- [x] 02-01-PLAN.md — Tracer: pick the MIDI input, write every raw message to IndexedDB as it arrives, reopen restores the piece and the events unmodified (headless Chrome from file://); decode table and storage schema pinned with node:test
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -188,7 +188,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Score on Screen | 3/3 | Complete    | 2026-09-13 |
-| 2. Click and Capture | 0/4 | Not started | - |
+| 2. Click and Capture | 1/4 | In Progress|  |
 | 3. What You Actually Played | 0/TBD | Not started | - |
 | 4. Early and Late | 0/TBD | Not started | - |
 | 5. Habits, Not Slips | 0/TBD | Not started | - |

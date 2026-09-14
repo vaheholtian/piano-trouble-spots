@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 2
 current_phase_name: Click and Capture
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-09-14T02:50:33.591Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-09-14T03:11:50.970Z"
 last_activity: 2026-09-13
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
-state_head: fd03d3a501c110f4ce725e6741b068508306a0dc
+last_activity_desc: Phase 2 execution started
+state_head: ba6af0f3eda3e86224c05cdde3db8d02e5ae984a
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 7
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-13)
 
 **Core value:** After many repetitions of a passage, the score shows the handful of spots and habits worth working on, with enough repetitions behind each one that the pianist trusts it.
-**Current focus:** Phase 01 — Score on Screen
+**Current focus:** Phase 2 — Click and Capture
 
 ## Current Position
 
-Phase: 2 (Click and Capture) — READY TO EXECUTE
-Plan: Not started
+Phase: 2 (Click and Capture) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-09-13 — Phase 01 complete, transitioned to Phase 2
+Last activity: 2026-09-13 — Phase 2 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P01 | 25min | 2 tasks | 12 files |
 | Phase 01 P02 | 25min | 3 tasks | 8 files |
 | Phase 01 P03 | 10min | 2 tasks | 1 files |
+| Phase 02 P01 | 25min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Tie fixture bar 4 uses MuseScore's real stop-before-start note order for the three-segment chain's middle note, exercising the actual continuation-joins-open-tie behavior
 - [Phase 01]: Phase 1 gate re-ran npm test, check-run-path.cjs --fixtures, and check-svg-map.cjs fresh immediately before the checkpoint rather than trusting prior evidence alone
 - [Phase 01]: Ladder manifest and checkpoint treat resize-on-every-rung and invalid-file recovery as required parts of approval, not optional extras
+- [Phase 2]: sessions store carries a byPiece index on pieceId (plan-specified, caught by the headless round-trip check before commit)
+- [Phase 2]: idb npm package (named exports) supplies the Node idb global for tests, matching the UMD build the browser loads from the CDN
+- [Phase 2]: fake-indexeddb's full IndexedDB constructor set must be installed on globalThis for idb's wrap() instanceof checks, not just IDBFactory/IDBKeyRange
 
 ### Pending Todos
 
@@ -101,6 +105,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-14T01:55:51.589Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-click-and-capture/02-CONTEXT.md
+Last session: 2026-09-14T03:11:50.932Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
