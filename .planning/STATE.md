@@ -1,17 +1,17 @@
 ---
 gsd_state_version: "1.0"
 current_phase: 03
-current_phase_name: What You Actually Played
+current_phase_name: what-you-actually-played
 status: planning
 stopped_at: Phase 3 context gathered
-last_updated: "2026-09-14T18:19:39.351Z"
+last_updated: "2026-09-14T19:49:59.004Z"
 last_activity: 2026-09-14
 last_activity_desc: User reports Phase 2 finished; redirected downstream planning toward early repeated-mistake feedback
-state_head: 61e287a3052256344a343efe0e8807a65ec8487f
+state_head: af0835bae1af25b6b130a5ef9b1efad1c1f81fe0
 progress:
   total_phases: 7
   completed_phases: 0
-  total_plans: 13
+  total_plans: 14
   completed_plans: 6
   percent: 0
 ---
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-14)
 
 ## Current Position
 
-Phase: 03 (What You Actually Played) — READY TO EXECUTE
+Phase: 03 (what-you-actually-played) — READY TO EXECUTE
 Plan: Not started
 Status: Ready for discussion and planning against the revised ROADMAP.md
 Last activity: 2026-09-14 — user reported Phase 2 finished; planning direction revised

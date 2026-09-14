@@ -123,29 +123,33 @@ Plans:
   5. Before advancing beyond rung 1, user played 10+ passes at one tempo with one repeated pitch mistake and one one-off slip. Selecting a marked score note shows plain-language counts with assessed and unassessed totals, and the user confirms the recurring mistake is distinguishable from the slip. Reuse this minimal view as the ladder expands; bar shading, intensity scales, timing statistics, and ranked lists are not needed for this experiment
   6. Fixture examples cover a missing first note, late entry, repeated pitches, an extra note, an interrupted pass, ambiguous alignment, and tempo changes. The pass-origin and counting rules above explain each result, and these rules are checked on relevant piano examples before the next rung
 
-**Plans:** 6 plans
+**Plans:** 7 plans
 
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Interpretation contract docs/analysis-rules.md (every rule, worked rung-1 examples, cost model, shapes, tunables), twelve hand-derived rung-1 fixtures with a shape test, and the headless-Chrome paint harness (red until the tracer)
+- [ ] 03-01-PLAN.md — Interpretation contract docs/analysis-rules.md (every rule, reconciled rung-1 examples, late-entry readings, finalization, gap denominators, tempo membership, chord rules, shapes, tunables), twelve hand-derived rung-1 fixtures with a shape test, and the headless-Chrome paint harness (red until the tracer)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Tracer: one marked pass of C D F F G goes align (fixed origin, slots, DP) → aggregate (tempo groups, counts) → paint (notehead children through svgMap) → red E4 on the notation and the detail sentence on click; repaint after every mark, on load, after resize; all twelve fixtures green
+- [ ] 03-02-PLAN.md — Tracer: one marked pass of C D F F G goes align → aggregate → paint → red E4 on the notation and the detail sentence on click; then a pass is judged only once its clicks exist (live equals replay), sessions stay bound to their own score across piece switches, the detail panel regenerates; all twelve fixtures green
 
 **Wave 3** *(blocked on Wave 2; 03-03 and 03-04 run in parallel, disjoint files)*
 
-- [ ] 03-03-PLAN.md — Engine: ambiguity from the co-optimal edge set (repeated pitches, messy pass), chords per notehead on rung 4, both hands on rung 3
-- [ ] 03-04-PLAN.md — Display: single-pass view and the way back, tempo-group selector, extra-note + glyphs with counts and sentences, seven-line paint harness
+- [ ] 03-03-PLAN.md — Engine, rung-1 rules: ambiguity from the co-optimal edge set (repeated pitches, messy pass), the length-independent late-entry reading, restart without a mark, tempo change inside a pass (clicks strictly before the end), no-origin edge
+- [ ] 03-04-PLAN.md — Display: single-pass view and the way back with the detail following the view, tempo-group selector, extra-note + glyphs (system breaks included) with counts and sentences, nine-line paint harness
 
-**Wave 4** *(blocked on 03-03)*
+**Wave 4** *(blocked on 03-03 and 03-04)*
 
-- [ ] 03-05-PLAN.md — Engine: restart without a mark, tempo change inside a pass, no-origin edge, and the ladder regression test through the real OSMD parser on all five rungs
+- [ ] 03-05-PLAN.md — Rung-1 piano gate: all node/npm checks, README and rung-1 checklist with views and sentences, then Scenario A (single passes) and Scenario B (twelve passes at one tempo, then a separate tempo switch) at the FP-60X
 
-**Wave 5** *(blocked on 03-04 and 03-05)*
+**Wave 5** *(blocked on the rung-1 approval in 03-05)*
 
-- [ ] 03-06-PLAN.md — Phase gate (all node/npm checks, README and piano checklist) and the two blocking at-the-piano checkpoints in ladder order: rung 1 single passes plus the twelve-pass habit-versus-slip experiment, then rungs 2 to 5
+- [ ] 03-06-PLAN.md — Engine, harder rungs: chords per notehead with re-strikes and equidistant pairings reported honestly (rung 4), both hands as one slot (rung 3), ladder regression through the real OSMD parser against an independent oracle
+
+**Wave 6** *(blocked on 03-06)*
+
+- [ ] 03-07-PLAN.md — Phase gate and rungs 2 to 5 at the FP-60X in ladder order, every observation with its view and sentence
 
 **UI hint**: yes
 
@@ -224,7 +228,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Score on Screen | 3/3 | Complete    | 2026-09-13 |
 | 2. Click and Capture | 3/4 documented | Complete per user; final evidence record pending | 2026-09-14 |
-| 3. What You Actually Played | 0/6 | Planned | - |
+| 3. What You Actually Played | 0/7 | Planned | - |
 | 4. Early and Late | 0/TBD | Not started | - |
 | 5. Habits, Not Slips | 0/TBD | Not started | - |
 | 6. Real Pieces and Passages | 0/TBD | Not started | - |

@@ -42,12 +42,14 @@ Filled in by the planner/executor per task. Requirement → test map from RESEAR
 | Requirement | Behavior | Test Type | Automated Command | File Exists | Status |
 |-------------|----------|-----------|-------------------|-------------|--------|
 | ANLZ-01 | Missing first note, late first note, whole bar one beat late, wrong E, octave slip, correction with extra at its gap, shifted start (five wrong), not-reached with grace boundary, origin after pass start, double mark — twelve hand-derived fixtures | unit (fixture) | `node --test test/align.test.cjs test/align-fixtures.test.cjs` | ❌ 03-01 (fixtures + shape test), 03-02 (engine tests) | ⬜ pending |
-| ANLZ-01 | Repeated pitches unique / symmetric tie (whole group ambiguous), messy pass with an ambiguous region, chords per notehead (rung 4), both hands one slot (rung 3), rolled chord, re-strike | unit (fixture) | `node --test test/align.test.cjs` | ❌ 03-03 | ⬜ pending |
-| ANLZ-01 | Restart / near miss / two runs, tempo change inside a pass, no origin, beyond the timeline, repeated opening; all five rungs through the real OSMD parser with synthesized clicks | unit (fixture + ladder) | `node --test test/align.test.cjs test/align-ladder.test.cjs` | ❌ 03-05 | ⬜ pending |
+| ANLZ-01 | A pass is judged only once final; every final click prefix gives the same PassResult as the full timeline (live equals replay); per-event deviationMs; worked costs via totalCost | unit (fixture + property) | `node --test test/align.test.cjs` | ❌ 03-02 | ⬜ pending |
+| ANLZ-01 | Repeated pitches unique / symmetric tie, messy pass with an ambiguous region; late entry at any length (twelve notes one beat late, rung 1 three beats late, late with a wrong note, late and abandoned); restart / near miss / two runs; tempo change inside a pass and a BPM change on the first click after a pass; no origin, empty and beyond the timeline, repeated opening | unit (fixture) | `node --test test/align.test.cjs test/align-fixtures.test.cjs` | ❌ 03-03 | ⬜ pending |
+| ANLZ-01 | Chords per notehead (rung 4), re-strike inside a chord with note-order permutations, equidistant in-chord pairing ambiguous, rolled chord, both hands one slot (rung 3); all five rungs through the real OSMD parser against an independent oracle (perfect, wrong pitch, omission with fixed end, one beat late, rung-5 anchors) | unit (fixture + ladder) | `node --test test/align.test.cjs test/align-ladder.test.cjs` | ❌ 03-06 | ⬜ pending |
 | ANLZ-01 | Double mark (zero-note pass) excluded from counts/denominators; tempo-changed passes outside every group | unit (hand-built PassResults) | `node --test test/aggregate.test.cjs` | ❌ 03-02 | ⬜ pending |
-| ANLZ-03 | `align.js` / `aggregate.js` have no DOM, MIDI, or audio dependency | unit + static | `node --test test/align.test.cjs` (plain Node) + `node scripts/check-run-path.cjs` + a comment-stripped negative grep in 03-02/03-03/03-05 acceptance criteria | ✅ pattern | ⬜ pending |
-| AGGR-01 slice | Counts/rates only over passes at the same BPM; per-note wrong/missed/assessed/unassessed-by-reason; gap counts; colour rule; sentence templates | unit | `node --test test/aggregate.test.cjs` | ❌ 03-02 | ⬜ pending |
-| AGGR-03 slice | Painted notehead children change `fill` in a real render; detail sentences; single-pass view and back; extra glyphs with counts; tempo selector; resize and reload survival | browser (headless Chrome) | `node scripts/check-paint.cjs` (four OK lines after 03-02, seven after 03-04) | ❌ 03-01 (harness, red) → 03-02 / 03-04 (green) | ⬜ pending |
+| ANLZ-03 | `align.js` / `aggregate.js` have no DOM, MIDI, or audio dependency | unit + static | `node --test test/align.test.cjs` (plain Node) + `node scripts/check-run-path.cjs` + a comment-stripped negative grep in 03-02/03-03/03-06 acceptance criteria | ✅ pattern | ⬜ pending |
+| AGGR-01 slice | Counts/rates only over passes at the same BPM; per-note wrong/missed/assessed/unassessed-by-reason; gap counts with unassessedPasses and passesWithExtra ≤ assessedPasses; colour rule; sentence templates | unit | `node --test test/aggregate.test.cjs` | ❌ 03-02 | ⬜ pending |
+| AGGR-03 slice | Glyph placement rule (same system, system break, first, last, within) | unit (pure geometry) | `node --test test/paint.test.cjs` | ❌ 03-04 | ⬜ pending |
+| AGGR-03 slice | Painted notehead children change `fill` in a real render; pass pending until its clicks exist; detail sentences regenerate; piece switch never paints the wrong score; single-pass view and back; extra glyphs with counts and geometry; tempo selector and an after-mark BPM change; resize and reload survival | browser (headless Chrome) | `node scripts/check-paint.cjs` (six OK lines after 03-02, nine after 03-04) | ❌ 03-01 (harness, red) → 03-02 / 03-04 (green) | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -56,12 +58,13 @@ Filled in by the planner/executor per task. Requirement → test map from RESEAR
 ## Wave 0 Requirements
 
 - [ ] `docs/analysis-rules.md` — interpretation contract (D-21), before align code (03-01 Task 1)
-- [ ] `test/fixtures/align/*.json` — twelve rung-1 fixtures (03-01 Task 2); five more in 03-03, five more in 03-05 (22 total)
+- [ ] `test/fixtures/align/*.json` — twelve rung-1 fixtures (03-01 Task 2); thirteen more in 03-03, four more in 03-06 (29 total)
 - [ ] `test/align-fixtures.test.cjs` — fixture shape validation, green with no engine (03-01 Task 2)
 - [ ] `scripts/check-paint.cjs` + `npm run check:paint` — headless-Chrome paint check, red by design until 03-02 (03-01 Task 3)
-- [ ] `test/align.test.cjs` — ANLZ-01 fixture scenarios (03-02, extended in 03-03 and 03-05)
-- [ ] `test/aggregate.test.cjs` — AGGR-01 pitch-only slice, D-14 denominator exclusion, D-19 sentences (03-02)
-- [ ] `test/align-ladder.test.cjs` — all five rungs through the real parser (03-05 Task 2)
+- [ ] `test/align.test.cjs` — ANLZ-01 fixture scenarios (03-02, extended in 03-03 and 03-06)
+- [ ] `test/aggregate.test.cjs` — AGGR-01 pitch-only slice, D-14 denominator exclusion, gap invariant, D-19 sentences (03-02)
+- [ ] `test/paint.test.cjs` — glyph placement rule (03-04 Task 2)
+- [ ] `test/align-ladder.test.cjs` — all five rungs through the real parser against an independent oracle (03-06 Task 3)
 
 ---
 
