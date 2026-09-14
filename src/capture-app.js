@@ -22,6 +22,12 @@ globalThis.CaptureApp = (() => {
     events: [],
     pending: new Set(),
     restored: null,
+    audio: null,
+    audioState: '',
+    metronome: null,
+    pair: null,
+    clicks: [],
+    bpm: 100,
   };
 
   function setMidiState(text) {
@@ -69,6 +75,11 @@ globalThis.CaptureApp = (() => {
 
       C.restored = { pieceId: lastPieceId || null, sessions: summaries };
       if (!isFixture) C.pieceId = lastPieceId || null;
+      if (C.pieceId) {
+        const storedBpm = await Storage.getSetting(C.db, 'bpm:' + C.pieceId);
+        C.bpm = Metronome.isValidBpm(storedBpm) ? storedBpm : 100;
+        $('bpm').value = String(C.bpm);
+      }
       $('status').dataset.restore = lastPieceId ? 'done' : 'none';
     } catch (error) {
       $('status').dataset.restore = 'error';
@@ -132,6 +143,30 @@ globalThis.CaptureApp = (() => {
     }
   }
 
+  function readBpm() {
+    const value = Number.parseInt($('bpm').value, 10);
+    return Metronome.isValidBpm(value) ? value : null;
+  }
+
+  function timeSignatureFor(bar) {
+    const measures = ScoreRenderer.state.model.measures;
+    return measures[(bar - 1) % measures.length].timeSignature;
+  }
+
+  function onClick(click) {
+    const record = { sessionId: C.session.id, ...click, pageTime: Clock.toPageTime(click.audioTime, C.pair) };
+    C.clicks.push(record);
+    const p = Storage.appendClick(C.db, record);
+    C.pending.add(p);
+    p.then((id) => {
+      record.id = id;
+    }).catch((error) => {
+      toast(error instanceof Error ? error.message : String(error));
+    }).finally(() => {
+      C.pending.delete(p);
+    });
+  }
+
   function onMidiEvent(record) {
     if (record.type === 'noteon') {
       C.liveCount += 1;
@@ -167,9 +202,28 @@ globalThis.CaptureApp = (() => {
   async function start() {
     if (C.pieceId === null) {
       toast('Open a piece first');
-      return;
+      return null;
     }
-    if (C.session) return;
+    if (C.session) return null;
+    const bpm = readBpm();
+    if (bpm === null) {
+      toast('Set a BPM between 20 and 300');
+      return null;
+    }
+
+    // Pitfall P2-3: AudioContext (or its resume()) must be created/called synchronously inside
+    // this click handler's own task, before any await, or some browsers never honor the
+    // gesture and the click stays silently suspended forever.
+    if (!C.audio) {
+      C.audio = new AudioContext();
+      C.audio.onstatechange = () => {
+        C.audioState = C.audio.state;
+      };
+    }
+    const resumed = C.audio.resume();
+    await resumed;
+    C.pair = { ...Clock.samplePair(performance.now(), C.audio.currentTime), sampledAt: new Date().toISOString() };
+    C.audioState = C.audio.state;
 
     const session = {
       pieceId: C.pieceId,
@@ -178,10 +232,10 @@ globalThis.CaptureApp = (() => {
       endedAt: null,
       endedPerf: null,
       endReason: null,
-      bpmAtStart: null,
+      bpmAtStart: bpm,
       markerKeys: null,
-      clockPairs: [],
-      latency: null,
+      clockPairs: [C.pair],
+      latency: { base: C.audio.baseLatency, output: C.audio.outputLatency },
       calibration: null,
     };
     const id = await Storage.createSession(C.db, session);
@@ -190,8 +244,13 @@ globalThis.CaptureApp = (() => {
     C.passOrdinal = 1;
     C.liveCount = 0;
     C.events = [];
+    C.clicks = [];
+    C.bpm = bpm;
+    C.metronome = Metronome.create(C.audio, { timeSignatureFor, onClick });
+    C.metronome.start(bpm);
+    await Storage.putSetting(C.db, 'bpm:' + C.pieceId, bpm);
     $('startStop').textContent = 'Stop';
-    $('sessionState').textContent = 'Recording session ' + id;
+    $('sessionState').textContent = 'Recording session ' + id + ' at ' + bpm + ' BPM';
     $('startStop').blur();
     return id;
   }
@@ -204,11 +263,19 @@ globalThis.CaptureApp = (() => {
     if (!C.session) return;
     const id = C.session.id;
     const eventCount = C.events.length;
+    if (C.metronome) {
+      C.metronome.stop();
+      C.metronome = null;
+    }
+    const finalPair = { ...Clock.samplePair(performance.now(), C.audio.currentTime), sampledAt: new Date().toISOString() };
+    C.session.clockPairs.push(finalPair);
     await flush();
     await Storage.updateSession(C.db, id, {
       endedAt: new Date().toISOString(),
       endedPerf: performance.now(),
       endReason,
+      clockPairs: C.session.clockPairs,
+      latency: C.session.latency,
     });
     C.session = null;
     $('startStop').textContent = 'Start';
@@ -255,6 +322,9 @@ globalThis.CaptureApp = (() => {
       await Storage.putSetting(C.db, 'lastPieceId', id);
       C.pieceId = id;
       C.fileName = ev.detail.file.name;
+      const storedBpm = await Storage.getSetting(C.db, 'bpm:' + id);
+      C.bpm = Metronome.isValidBpm(storedBpm) ? storedBpm : 100;
+      $('bpm').value = String(C.bpm);
     } catch (error) {
       toast(error instanceof Error ? error.message : String(error));
     }
@@ -268,6 +338,20 @@ globalThis.CaptureApp = (() => {
     const inputId = ev.target.value;
     attachInput(inputId);
     await Storage.putSetting(C.db, 'lastMidiInputId', inputId);
+  });
+
+  $('bpm').addEventListener('change', async () => {
+    const bpm = readBpm();
+    if (bpm === null) return;
+    C.bpm = bpm;
+    if (C.session && C.metronome) {
+      // D-08/D-14: a tempo change neither ends nor restarts the session's click.
+      C.metronome.setBpm(bpm);
+      $('sessionState').textContent = 'Recording session ' + C.session.id + ' at ' + bpm + ' BPM';
+    }
+    if (C.pieceId) {
+      await Storage.putSetting(C.db, 'bpm:' + C.pieceId, bpm);
+    }
   });
 
   $('startStop').addEventListener('click', () => {

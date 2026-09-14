@@ -102,6 +102,21 @@ async function pollCapture(ws, timeoutMs) {
   throw new Error('page did not finish loading: ' + JSON.stringify(last));
 }
 
+// Headless Chrome's AudioContext clock does not track wall-clock time 1:1 (no real audio
+// output device to pace it against) -- a fixed sleep is flaky. Poll the actual click count
+// CaptureApp has recorded instead of guessing how long "a few clicks" takes in real time.
+async function pollClicks(ws, minCount, timeoutMs) {
+  const expression = '(() => (CaptureApp.state.clicks || []).length)()';
+  const deadline = Date.now() + timeoutMs;
+  let last = 0;
+  while (Date.now() < deadline) {
+    last = await evaluate(ws, expression);
+    if (last >= minCount) return last;
+    await sleep(100);
+  }
+  throw new Error('only ' + last + ' clicks scheduled after ' + timeoutMs + 'ms, expected at least ' + minCount);
+}
+
 async function pollRestore(ws, timeoutMs) {
   const expression = `(() => {
     const el = document.getElementById('status');
@@ -201,12 +216,25 @@ async function main() {
     await send(ws, 'Page.navigate', { url: fixtureUrl });
     await pollCapture(ws, 90000);
 
+    await evaluate(ws, "document.getElementById('bpm').value = '120'");
+
     const sessionId = await evaluate(ws, 'CaptureApp.start()', { awaitPromise: true });
     if (typeof sessionId !== 'number') {
       console.log('FAIL capture round-trip: CaptureApp.start() did not return a session id: ' + JSON.stringify(sessionId));
       exitCode = 1;
       return;
     }
+
+    const audioState = await evaluate(ws, 'CaptureApp.state.audioState');
+    if (audioState !== 'running') {
+      console.log('FAIL capture round-trip: AudioContext state ' + audioState + ' in headless Chrome (check the autoplay flag)');
+      exitCode = 2;
+      return;
+    }
+
+    // The click now runs for a bit before the raw MIDI messages land, so several clicks are
+    // already in the timeline by the time we check it below (CAPT-03).
+    await pollClicks(ws, 3, 15000);
 
     const sendExpression = `(() => {
       const t = performance.now();
@@ -293,13 +321,74 @@ async function main() {
       }
     }
 
+    const timelineExpr = `(async () => {
+      const db = await Storage.open();
+      const clicks = await Storage.readClicks(db, ${JSON.stringify(sessionId)});
+      const session = await Storage.getSession(db, ${JSON.stringify(sessionId)});
+      return { clicks, session };
+    })()`;
+    const timeline = await evaluate(ws, timelineExpr, { awaitPromise: true });
+    const clicks = (timeline && timeline.clicks) || [];
+    const session = timeline && timeline.session;
+
+    if (!Array.isArray(clicks) || clicks.length < 3) {
+      failures.push('readClicks returned ' + (Array.isArray(clicks) ? clicks.length : typeof clicks) + ' records, expected at least 3');
+    } else {
+      const first = clicks[0];
+      if (first.bar !== 1 || first.beat !== 1 || first.accent !== true || first.bpm !== 120) {
+        failures.push('first click was ' + JSON.stringify(first) + ', expected bar 1 beat 1 accent true bpm 120');
+      }
+      for (let i = 1; i < clicks.length; i++) {
+        const diff = clicks[i].audioTime - clicks[i - 1].audioTime;
+        if (Math.abs(diff - 0.5) > 0.002) {
+          failures.push('click ' + i + ' interval from the previous click was ' + diff + 's, expected ~0.5s at 120 BPM');
+        }
+        if (!(clicks[i].pageTime > clicks[i - 1].pageTime)) {
+          failures.push('click ' + i + ' pageTime ' + clicks[i].pageTime + ' did not increase from ' + clicks[i - 1].pageTime);
+        }
+      }
+      // Rung 1 is 5/4: beats 1..5 in bar 1, then bar 2 beat 1, and so on.
+      const expected = [[1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [2, 1], [2, 2], [2, 3]];
+      clicks.forEach((click, i) => {
+        if (i >= expected.length) return;
+        const [bar, beat] = expected[i];
+        if (click.bar !== bar || click.beat !== beat) {
+          failures.push('click ' + i + ' was bar ' + click.bar + ' beat ' + click.beat + ', expected bar ' + bar + ' beat ' + beat);
+        }
+        const expectedAccent = beat === 1;
+        if (click.accent !== expectedAccent) {
+          failures.push('click ' + i + ' accent was ' + click.accent + ', expected ' + expectedAccent);
+        }
+      });
+    }
+
+    if (!session) {
+      failures.push('getSession returned no session for id ' + sessionId);
+    } else {
+      if (!Array.isArray(session.clockPairs) || session.clockPairs.length < 2) {
+        failures.push('session.clockPairs had ' + (session.clockPairs && session.clockPairs.length) + ' entries, expected at least 2');
+      } else {
+        session.clockPairs.forEach((pair, i) => {
+          if (!Number.isFinite(pair.performanceNow) || !Number.isFinite(pair.audioContextTime)) {
+            failures.push('session.clockPairs[' + i + '] was not finite: ' + JSON.stringify(pair));
+          }
+        });
+      }
+      if (session.bpmAtStart !== 120) {
+        failures.push('session.bpmAtStart was ' + session.bpmAtStart + ', expected 120');
+      }
+      if (!session.latency || !Number.isFinite(session.latency.base)) {
+        failures.push('session.latency.base was ' + (session.latency && session.latency.base) + ', expected a finite number');
+      }
+    }
+
     ws.close();
 
     if (failures.length > 0) {
       console.log('FAIL capture round-trip: ' + failures.join(' | '));
       exitCode = 1;
     } else {
-      console.log('OK capture round-trip: 8 raw events restored unmodified, piece restored from stored bytes');
+      console.log('OK capture round-trip: 8 raw events restored unmodified, ' + clicks.length + ' clicks in the timeline, piece restored from stored bytes');
       exitCode = 0;
     }
   } catch (error) {

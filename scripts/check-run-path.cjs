@@ -33,6 +33,8 @@ const EXPECTED_LOCAL_SCRIPTS = [
   'src/score-model.js',
   'src/inspect-table.js',
   'src/score-renderer.js',
+  'src/clock.js',
+  'src/metronome.js',
   'src/midi-capture.js',
   'src/storage.js',
   'src/capture-app.js',
@@ -69,6 +71,8 @@ function checkIndexHtml() {
     'id="startStop"',
     'id="liveCount"',
     'id="sessionList"',
+    'id="bpm"',
+    'id="readout"',
   ];
   for (const marker of requiredMarkers) {
     if (html.includes(marker)) ok('index.html contains ' + marker);

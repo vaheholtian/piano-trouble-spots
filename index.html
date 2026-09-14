@@ -33,6 +33,7 @@
 <section id="capture">
   <label>MIDI input <select id="midiInput"></select></label>
   <span id="midiState">Waiting for MIDI permission...</span>
+  <label>BPM <input id="bpm" type="number" min="20" max="300" step="1" value="100"></label>
   <button id="startStop" type="button">Start</button>
   <span id="sessionState">Not recording</span>
   <div>
@@ -40,6 +41,10 @@
     <span id="liveCount">0</span> notes, last <span id="lastNote">-</span>
   </div>
   <ol id="sessionList"></ol>
+  <details id="readout">
+    <summary>Clock readout</summary>
+    <dl id="readoutBody"></dl>
+  </details>
 </section>
 <div id="notation"></div>
 <details id="inspect" open>
@@ -66,6 +71,8 @@
 <script src="src/score-model.js"></script>
 <script src="src/inspect-table.js"></script>
 <script src="src/score-renderer.js"></script>
+<script src="src/clock.js"></script>
+<script src="src/metronome.js"></script>
 <script src="src/midi-capture.js"></script>
 <script src="src/storage.js"></script>
 <script src="src/capture-app.js"></script>
