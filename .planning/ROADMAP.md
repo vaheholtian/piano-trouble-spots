@@ -123,33 +123,49 @@ Plans:
   5. Before advancing beyond rung 1, user played 10+ passes at one tempo with one repeated pitch mistake and one one-off slip. Selecting a marked score note shows plain-language counts with assessed and unassessed totals, and the user confirms the recurring mistake is distinguishable from the slip. Reuse this minimal view as the ladder expands; bar shading, intensity scales, timing statistics, and ranked lists are not needed for this experiment
   6. Fixture examples cover a missing first note, late entry, repeated pitches, an extra note, an interrupted pass, ambiguous alignment, and tempo changes. The pass-origin and counting rules above explain each result, and these rules are checked on relevant piano examples before the next rung
 
-**Plans:** 7 plans
+**Plans:** 9 plans
 
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Interpretation contract docs/analysis-rules.md (every rule, reconciled rung-1 examples, late-entry readings, finalization, gap denominators, tempo membership, chord rules, shapes, tunables), twelve hand-derived rung-1 fixtures with a shape test, and the headless-Chrome paint harness (red until the tracer)
+- [ ] 03-01-PLAN.md — Interpretation contract docs/analysis-rules.md. Covers every rule, reconciled rung-1 examples, late-entry readings with a probe-token lag bound, the `reachClock` switch (D-11 default, user decision pending), finalization over stable fields, gap denominators with "at least" lower bounds, tempo membership, chord rules, shapes and tunables. Also twelve hand-derived rung-1 fixtures with a shape test, and the headless-Chrome paint harness with per-group OK lines (red until the tracer)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Tracer: one marked pass of C D F F G goes align → aggregate → paint → red E4 on the notation and the detail sentence on click; then a pass is judged only once its clicks exist (live equals replay), sessions stay bound to their own score across piece switches, the detail panel regenerates; all twelve fixtures green
+- [ ] 03-02-PLAN.md — Tracer: one marked pass of C D F F G goes align → aggregate → paint → red E4 on the notation and the detail sentence on click. Then:
+  - a pass is judged only once its clicks exist (live equals replay over stable fields);
+  - sessions stay bound to their own score across piece switches and same-file reopens;
+  - final results are reused;
+  - the detail panel regenerates.
+
+  All twelve fixtures green
 
 **Wave 3** *(blocked on Wave 2; 03-03 and 03-04 run in parallel, disjoint files)*
 
-- [ ] 03-03-PLAN.md — Engine, rung-1 rules: ambiguity from the co-optimal edge set (repeated pitches, messy pass), the length-independent late-entry reading, restart without a mark, tempo change inside a pass (clicks strictly before the end), no-origin edge
-- [ ] 03-04-PLAN.md — Display: single-pass view and the way back with the detail following the view, tempo-group selector, extra-note + glyphs (system breaks included) with counts and sentences, nine-line paint harness
+- [ ] 03-03-PLAN.md — Engine, rung-1 rules: ambiguity from the co-optimal edge set (repeated pitches, messy pass), the late-entry reading robust to a stray or missing opening note, both reach clocks pinned, restart without a mark, tempo change inside a pass (clicks strictly before the end), no-origin edge, measured analysis budget
+- [ ] 03-04-PLAN.md — Display: single-pass view and the way back with the detail following the view, tempo-group selector, extra-note + glyphs (system breaks included) with counts and sentences, ten-line paint harness with reconciled counts, suffix-tolerant capture round-trip check
 
 **Wave 4** *(blocked on 03-03 and 03-04)*
 
-- [ ] 03-05-PLAN.md — Rung-1 piano gate: all node/npm checks, README and rung-1 checklist with views and sentences, then Scenario A (single passes) and Scenario B (twelve passes at one tempo, then a separate tempo switch) at the FP-60X
+- [ ] 03-05-PLAN.md — Rung-1 piano gate: all node/npm checks, README and a rung-1 checklist with the ready rule, views and sentences. Then at the FP-60X:
+  - Scenario A: single passes, including the reach decision, a doubled E and a within-pass tempo change;
+  - Scenario B: twelve passes at one tempo, then a controlled BPM change right after a mark.
 
-**Wave 5** *(blocked on the rung-1 approval in 03-05)*
+**Wave 5** *(blocked on the rung-1 approval and reach decision in 03-05)*
 
-- [ ] 03-06-PLAN.md — Engine, harder rungs: chords per notehead with re-strikes and equidistant pairings reported honestly (rung 4), both hands as one slot (rung 3), ladder regression through the real OSMD parser against an independent oracle
+- [ ] 03-06-PLAN.md — Rung 2: apply the user's reach decision to its one switch, ladder regression through the real OSMD parser against an independent oracle (rungs 1-2), rung-2 checklist and piano check
 
-**Wave 6** *(blocked on 03-06)*
+**Wave 6** *(blocked on the rung-2 approval in 03-06)*
 
-- [ ] 03-07-PLAN.md — Phase gate and rungs 2 to 5 at the FP-60X in ladder order, every observation with its view and sentence
+- [ ] 03-07-PLAN.md — Rung 3: both hands as one slot (fixture and ladder), rung-3 checklist and piano check
+
+**Wave 7** *(blocked on the rung-3 approval in 03-07)*
+
+- [ ] 03-08-PLAN.md — Rung 4: chords per notehead with re-strikes, an exact in-chord assignment that reports ties as ambiguous (no cap, brute-force checked, oversized fumble tokens), ladder rung 4, rung-4 checklist with the equidistant chord and timestamp-based roll diagnosis, piano check
+
+**Wave 8** *(blocked on the rung-4 approval in 03-08)*
+
+- [ ] 03-09-PLAN.md — Rung 5 and phase close: ladder rung 5 with interpolation anchors, 60 BPM and repeated bass pitches, rung-5 checklist and piano check (late, wrapped, repeated G3), evidence table per success criterion
 
 **UI hint**: yes
 
@@ -228,7 +244,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Score on Screen | 3/3 | Complete    | 2026-09-13 |
 | 2. Click and Capture | 3/4 documented | Complete per user; final evidence record pending | 2026-09-14 |
-| 3. What You Actually Played | 0/7 | Planned | - |
+| 3. What You Actually Played | 0/9 | Planned | - |
 | 4. Early and Late | 0/TBD | Not started | - |
 | 5. Habits, Not Slips | 0/TBD | Not started | - |
 | 6. Real Pieces and Passages | 0/TBD | Not started | - |
