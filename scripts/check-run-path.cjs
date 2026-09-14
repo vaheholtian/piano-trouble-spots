@@ -39,6 +39,9 @@ const EXPECTED_LOCAL_SCRIPTS = [
   'src/metronome.js',
   'src/midi-capture.js',
   'src/storage.js',
+  'src/align.js',
+  'src/aggregate.js',
+  'src/paint.js',
   'src/capture-app.js',
 ];
 
@@ -76,6 +79,10 @@ function checkIndexHtml() {
     'id="bpm"',
     'id="readout"',
     'id="passList"',
+    'id="analysisHeading"',
+    'id="tempoGroup"',
+    'id="markOverlay"',
+    'id="detail"',
   ];
   for (const marker of requiredMarkers) {
     if (html.includes(marker)) ok('index.html contains ' + marker);

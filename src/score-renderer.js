@@ -164,6 +164,10 @@ function renderAndMap() {
   // Invisible to the user; this is what the headless developer check reads.
   $('status').dataset.renderCount = String(S.renderCount);
   $('status').dataset.problems = S.problems.join('; ');
+
+  // Fired after buildSvgMap() so any repaint listener always sees the freshly rebuilt map
+  // (Phase 3 D-17; fires on every load and on the debounced resize re-render).
+  document.dispatchEvent(new CustomEvent('piece-rendered', { detail: { renderCount: S.renderCount } }));
 }
 
 let resizeTimer = null;
