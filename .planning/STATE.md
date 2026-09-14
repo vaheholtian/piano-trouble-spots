@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
 current_phase: 03
-current_phase_name: what-you-actually-played
-status: planning
-stopped_at: Phase 3 context gathered
-last_updated: "2026-09-14T21:56:17.095Z"
+current_phase_name: What You Actually Played
+status: executing
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-09-14T22:24:11.218Z"
 last_activity: 2026-09-14
-last_activity_desc: User reports Phase 2 finished; redirected downstream planning toward early repeated-mistake feedback
-state_head: 20983225c9745c1c94d772331238f1ac5e826c6e
+last_activity_desc: Phase 03 execution started
+state_head: "0b985490b69f3930b0f06719263dc839a708c232"
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 16
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-14)
 
 **Core value:** After many repetitions of a passage, the score shows the handful of spots and habits worth working on, with enough repetitions behind each one that the pianist trusts it.
-**Current focus:** Phase 3 — pitch alignment and a minimal repeated-mistake view, first on right-hand C D E F G
+**Current focus:** Phase 03 — What You Actually Played
 
 ## Current Position
 
-Phase: 03 (what-you-actually-played) — READY TO EXECUTE
-Plan: Not started
-Status: Ready for discussion and planning against the revised ROADMAP.md
-Last activity: 2026-09-14 — user reported Phase 2 finished; planning direction revised
+Phase: 03 (What You Actually Played) — EXECUTING
+Plan: 2 of 9
+Status: Ready to execute
+Last activity: 2026-09-14 — Phase 03 execution started
 
 Progress: 2/7 phases ([░░░░░░░░░░] 0%); Phase 2 completion is user-reported. Six of seven existing plans have summaries. The final Phase 2 summary and measured checkpoint results are not present locally; reconcile that record when available without inventing evidence or re-executing completed work solely for this planning edit.
 
@@ -65,6 +65,7 @@ Progress: 2/7 phases ([░░░░░░░░░░] 0%); Phase 2 completion i
 | Phase 02 P01 | 25min | 2 tasks | 13 files |
 | Phase 02 P02 | 19min | 2 tasks | 8 files |
 | Phase 02 P03 | 35min | 2 tasks | 8 files |
+| Phase 03 P01 | 50min | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,9 @@ Recent decisions affecting current work:
 - [Phase 2]: Headless Chrome's AudioContext clock does not track wall-clock time 1:1 (no real output device) -- poll the actual click count instead of a fixed sleep in headless verification scripts
 - [Phase 2]: FIRST_CLICK_DELAY_S equals SCHEDULE_AHEAD_S (both 0.1s) by design, so the first click is always caught on a later tick, never the synchronous one inside start() -- confirmed by both the mock-timer unit test and the real headless round trip
 - [Phase 2]: openPass()/persistPassUpdate() use the same fire-and-tracked write pattern as every other write in capture-app.js, guarded by a pass-object WeakMap against a same-tick close racing its own creation write
+- [Phase 03]: reachClock defaults to 'origin' (D-11 as written); 'reading' alternative is a tunable, user decision pending at the rung-1 piano checkpoint (03-05)
+- [Phase 03]: Late-entry lag bound uses the first 3 played tokens (lateEntryProbeTokens), not just the opening note, so one stray note cannot disable the late reading
+- [Phase 03]: Restart requires every optimal alignment to insert a run token; disagreement falls back to ambiguous rather than one traceback's opinion
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-14T17:19:25.473Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-what-you-actually-played/03-CONTEXT.md
+Last session: 2026-09-14T22:24:11.157Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None

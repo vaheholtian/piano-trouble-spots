@@ -123,12 +123,12 @@ Plans:
   5. Before advancing beyond rung 1, user played 10+ passes at one tempo with one repeated pitch mistake and one one-off slip. Selecting a marked score note shows plain-language counts with assessed and unassessed totals, and the user confirms the recurring mistake is distinguishable from the slip. Reuse this minimal view as the ladder expands; bar shading, intensity scales, timing statistics, and ranked lists are not needed for this experiment
   6. Fixture examples cover a missing first note, late entry, repeated pitches, an extra note, an interrupted pass, ambiguous alignment, and tempo changes. The pass-origin and counting rules above explain each result, and these rules are checked on relevant piano examples before the next rung
 
-**Plans:** 9 plans
+**Plans:** 1/9 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Interpretation contract docs/analysis-rules.md. Covers every rule, reconciled rung-1 examples, late-entry readings with a probe-token lag bound, the `reachClock` switch (D-11 default, user decision pending), finalization over stable fields, gap denominators with "at least" lower bounds, tempo membership, chord rules, seq-ordered tokens with an absolute chord window, restart judged over every optimal alternative, shapes and tunables. Also twelve hand-derived rung-1 fixtures with an exact-coverage shape test, and the headless-Chrome paint harness with per-group OK lines, including Start during a delayed restoration and an unreadable file during capture (red until the tracer)
+- [x] 03-01-PLAN.md — Interpretation contract docs/analysis-rules.md. Covers every rule, reconciled rung-1 examples, late-entry readings with a probe-token lag bound, the `reachClock` switch (D-11 default, user decision pending), finalization over stable fields, gap denominators with "at least" lower bounds, tempo membership, chord rules, seq-ordered tokens with an absolute chord window, restart judged over every optimal alternative, shapes and tunables. Also twelve hand-derived rung-1 fixtures with an exact-coverage shape test, and the headless-Chrome paint harness with per-group OK lines, including Start during a delayed restoration and an unreadable file during capture (red until the tracer)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -245,7 +245,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Score on Screen | 3/3 | Complete    | 2026-09-13 |
 | 2. Click and Capture | 3/4 documented | Complete per user; final evidence record pending | 2026-09-14 |
-| 3. What You Actually Played | 0/9 | Planned | - |
+| 3. What You Actually Played | 1/9 | In Progress|  |
 | 4. Early and Late | 0/TBD | Not started | - |
 | 5. Habits, Not Slips | 0/TBD | Not started | - |
 | 6. Real Pieces and Passages | 0/TBD | Not started | - |
