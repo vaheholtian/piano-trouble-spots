@@ -16,6 +16,11 @@
   #toast[hidden] { display: none; }
   .flash { display: inline-block; width: 12px; height: 12px; border-radius: 6px; background: #ccc; }
   .flash.on { background: #2a2; }
+  #scoreWrap { position: relative; }
+  #markOverlay { position: absolute; inset: 0; pointer-events: none; }
+  #markOverlay .extraGlyph { pointer-events: auto; }
+  .extraGlyph { position: absolute; color: #d00000; font-weight: bold; cursor: pointer; }
+  #passList li.selected { font-weight: bold; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@2.1.2/build/opensheetmusicdisplay.min.js"
         integrity="sha384-12lItsNRZQLTAONzjzkiAB2oOKC7L9JPNqWBHro/ug0hLJZTmGxbr0V2JRt8KwC2"
@@ -55,7 +60,15 @@
     <p>Positive means late. Play single notes exactly on the click: the median should sit near 0 ms. A steady offset such as +40 ms is a clock or latency problem, not a playing habit.</p>
   </details>
 </section>
-<div id="notation"></div>
+<section id="analysis">
+  <button type="button" id="analysisHeading">No session</button>
+  <select id="tempoGroup" hidden></select>
+</section>
+<div id="scoreWrap">
+  <div id="notation"></div>
+  <div id="markOverlay"></div>
+</div>
+<p id="detail">Click a coloured notehead or a + to see what happened there.</p>
 <details id="inspect" open>
   <summary id="inspectSummary">Notes</summary>
   <button id="copyJson" type="button">Copy model as JSON</button>
@@ -86,6 +99,9 @@
 <script src="src/metronome.js"></script>
 <script src="src/midi-capture.js"></script>
 <script src="src/storage.js"></script>
+<script src="src/align.js"></script>
+<script src="src/aggregate.js"></script>
+<script src="src/paint.js"></script>
 <script src="src/capture-app.js"></script>
 </body>
 </html>
