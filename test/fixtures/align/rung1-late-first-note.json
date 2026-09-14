@@ -1,0 +1,363 @@
+{
+  "name": "rung1-late-first-note",
+  "rule": "D-02",
+  "description": "C played 200ms late; D E F G on their clicks - a late but assessed opening note.",
+  "scoreModel": {
+    "schemaVersion": 1,
+    "title": "Rung 1 - Right hand C D E F G",
+    "measures": [
+      {
+        "number": 1,
+        "start": {
+          "num": 0,
+          "den": 1,
+          "beats": 0
+        },
+        "length": {
+          "num": 5,
+          "den": 1,
+          "beats": 5
+        },
+        "timeSignature": {
+          "beats": 5,
+          "beatType": 4
+        }
+      }
+    ],
+    "notes": [
+      {
+        "id": "m1-s1-v1-b0_1-p60",
+        "measure": 1,
+        "staff": 1,
+        "voice": 1,
+        "onset": {
+          "num": 0,
+          "den": 1,
+          "beats": 0
+        },
+        "duration": {
+          "num": 1,
+          "den": 1,
+          "beats": 1
+        },
+        "pitch": {
+          "name": "C4",
+          "midi": 60
+        },
+        "tiedNoteCount": 1
+      },
+      {
+        "id": "m1-s1-v1-b1_1-p62",
+        "measure": 1,
+        "staff": 1,
+        "voice": 1,
+        "onset": {
+          "num": 1,
+          "den": 1,
+          "beats": 1
+        },
+        "duration": {
+          "num": 1,
+          "den": 1,
+          "beats": 1
+        },
+        "pitch": {
+          "name": "D4",
+          "midi": 62
+        },
+        "tiedNoteCount": 1
+      },
+      {
+        "id": "m1-s1-v1-b2_1-p64",
+        "measure": 1,
+        "staff": 1,
+        "voice": 1,
+        "onset": {
+          "num": 2,
+          "den": 1,
+          "beats": 2
+        },
+        "duration": {
+          "num": 1,
+          "den": 1,
+          "beats": 1
+        },
+        "pitch": {
+          "name": "E4",
+          "midi": 64
+        },
+        "tiedNoteCount": 1
+      },
+      {
+        "id": "m1-s1-v1-b3_1-p65",
+        "measure": 1,
+        "staff": 1,
+        "voice": 1,
+        "onset": {
+          "num": 3,
+          "den": 1,
+          "beats": 3
+        },
+        "duration": {
+          "num": 1,
+          "den": 1,
+          "beats": 1
+        },
+        "pitch": {
+          "name": "F4",
+          "midi": 65
+        },
+        "tiedNoteCount": 1
+      },
+      {
+        "id": "m1-s1-v1-b4_1-p67",
+        "measure": 1,
+        "staff": 1,
+        "voice": 1,
+        "onset": {
+          "num": 4,
+          "den": 1,
+          "beats": 4
+        },
+        "duration": {
+          "num": 1,
+          "den": 1,
+          "beats": 1
+        },
+        "pitch": {
+          "name": "G4",
+          "midi": 67
+        },
+        "tiedNoteCount": 1
+      }
+    ]
+  },
+  "clicks": [
+    {
+      "id": 1,
+      "sessionId": 1,
+      "audioTime": 0.1,
+      "pageTime": 1000,
+      "bar": 1,
+      "beat": 1,
+      "bpm": 120,
+      "accent": true
+    },
+    {
+      "id": 2,
+      "sessionId": 1,
+      "audioTime": 0.6,
+      "pageTime": 1500,
+      "bar": 1,
+      "beat": 2,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 3,
+      "sessionId": 1,
+      "audioTime": 1.1,
+      "pageTime": 2000,
+      "bar": 1,
+      "beat": 3,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 4,
+      "sessionId": 1,
+      "audioTime": 1.6,
+      "pageTime": 2500,
+      "bar": 1,
+      "beat": 4,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 5,
+      "sessionId": 1,
+      "audioTime": 2.1,
+      "pageTime": 3000,
+      "bar": 1,
+      "beat": 5,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 6,
+      "sessionId": 1,
+      "audioTime": 2.6,
+      "pageTime": 3500,
+      "bar": 2,
+      "beat": 1,
+      "bpm": 120,
+      "accent": true
+    },
+    {
+      "id": 7,
+      "sessionId": 1,
+      "audioTime": 3.1,
+      "pageTime": 4000,
+      "bar": 2,
+      "beat": 2,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 8,
+      "sessionId": 1,
+      "audioTime": 3.6,
+      "pageTime": 4500,
+      "bar": 2,
+      "beat": 3,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 9,
+      "sessionId": 1,
+      "audioTime": 4.1,
+      "pageTime": 5000,
+      "bar": 2,
+      "beat": 4,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 10,
+      "sessionId": 1,
+      "audioTime": 4.6,
+      "pageTime": 5500,
+      "bar": 2,
+      "beat": 5,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 11,
+      "sessionId": 1,
+      "audioTime": 5.1,
+      "pageTime": 6000,
+      "bar": 3,
+      "beat": 1,
+      "bpm": 120,
+      "accent": true
+    },
+    {
+      "id": 12,
+      "sessionId": 1,
+      "audioTime": 5.6,
+      "pageTime": 6500,
+      "bar": 3,
+      "beat": 2,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 13,
+      "sessionId": 1,
+      "audioTime": 6.1,
+      "pageTime": 7000,
+      "bar": 3,
+      "beat": 3,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 14,
+      "sessionId": 1,
+      "audioTime": 6.6,
+      "pageTime": 7500,
+      "bar": 3,
+      "beat": 4,
+      "bpm": 120,
+      "accent": false
+    },
+    {
+      "id": 15,
+      "sessionId": 1,
+      "audioTime": 7.1,
+      "pageTime": 8000,
+      "bar": 3,
+      "beat": 5,
+      "bpm": 120,
+      "accent": false
+    }
+  ],
+  "pass": {
+    "ordinal": 1,
+    "startSeq": 0,
+    "startTimeStamp": 900,
+    "endSeq": 4,
+    "endTimeStamp": 3400,
+    "noteCount": 5,
+    "eventCount": 0,
+    "notes": [
+      {
+        "seq": 0,
+        "type": "noteon",
+        "note": 60,
+        "velocity": 80,
+        "timeStamp": 1200,
+        "marker": false
+      },
+      {
+        "seq": 1,
+        "type": "noteon",
+        "note": 62,
+        "velocity": 80,
+        "timeStamp": 1500,
+        "marker": false
+      },
+      {
+        "seq": 2,
+        "type": "noteon",
+        "note": 64,
+        "velocity": 80,
+        "timeStamp": 2000,
+        "marker": false
+      },
+      {
+        "seq": 3,
+        "type": "noteon",
+        "note": 65,
+        "velocity": 80,
+        "timeStamp": 2500,
+        "marker": false
+      },
+      {
+        "seq": 4,
+        "type": "noteon",
+        "note": 67,
+        "velocity": 80,
+        "timeStamp": 3000,
+        "marker": false
+      }
+    ]
+  },
+  "tunables": null,
+  "expected": {
+    "attempt": true,
+    "originIndex": 0,
+    "bpm": 120,
+    "wholeReason": null,
+    "notes": {
+      "m1-s1-v1-b0_1-p60": {
+        "status": "played"
+      },
+      "m1-s1-v1-b1_1-p62": {
+        "status": "played"
+      },
+      "m1-s1-v1-b2_1-p64": {
+        "status": "played"
+      },
+      "m1-s1-v1-b3_1-p65": {
+        "status": "played"
+      },
+      "m1-s1-v1-b4_1-p67": {
+        "status": "played"
+      }
+    },
+    "extras": []
+  }
+}
