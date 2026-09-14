@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 2
 current_phase_name: Click and Capture
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-09-14T03:11:50.970Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-09-14T03:32:59.810Z"
 last_activity: 2026-09-13
 last_activity_desc: Phase 2 execution started
-state_head: ba6af0f3eda3e86224c05cdde3db8d02e5ae984a
+state_head: 34879f3961a186af7eeea19d06165c49dceac00a
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 7
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-13)
 ## Current Position
 
 Phase: 2 (Click and Capture) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-09-13 — Phase 2 execution started
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P02 | 25min | 3 tasks | 8 files |
 | Phase 01 P03 | 10min | 2 tasks | 1 files |
 | Phase 02 P01 | 25min | 2 tasks | 13 files |
+| Phase 02 P02 | 19min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase 2]: sessions store carries a byPiece index on pieceId (plan-specified, caught by the headless round-trip check before commit)
 - [Phase 2]: idb npm package (named exports) supplies the Node idb global for tests, matching the UMD build the browser loads from the CDN
 - [Phase 2]: fake-indexeddb's full IndexedDB constructor set must be installed on globalThis for idb's wrap() instanceof checks, not just IDBFactory/IDBKeyRange
+- [Phase 2]: Headless Chrome's AudioContext clock does not track wall-clock time 1:1 (no real output device) -- poll the actual click count instead of a fixed sleep in headless verification scripts
+- [Phase 2]: FIRST_CLICK_DELAY_S equals SCHEDULE_AHEAD_S (both 0.1s) by design, so the first click is always caught on a later tick, never the synchronous one inside start() -- confirmed by both the mock-timer unit test and the real headless round trip
 
 ### Pending Todos
 
@@ -105,6 +108,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-14T03:11:50.932Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-09-14T03:32:59.769Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
