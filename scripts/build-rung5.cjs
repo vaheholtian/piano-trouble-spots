@@ -14,7 +14,14 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const MUSESCORE_EXE = process.env.MUSESCORE_EXE || 'C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe';
-const SOURCE = process.env.RUNG5_SOURCE || 'C:\\Users\\vaheh\\OneDrive\\Documents\\MuseScore4\\Scores\\Yanni - 4 measures.mscz';
+const SOURCE = process.env.RUNG5_SOURCE;
+if (!SOURCE) {
+  console.error(
+    'RUNG5_SOURCE env var is not set. Set it to the absolute path of the MuseScore ' +
+    'source file (e.g. RUNG5_SOURCE="C:\\path\\to\\Yanni - 4 measures.mscz") and re-run.'
+  );
+  process.exit(1);
+}
 const OUT_XML = path.resolve(__dirname, '..', 'fixtures', '05-yanni-4-measures.musicxml');
 const OUT_MXL = path.resolve(__dirname, '..', 'fixtures', '05-yanni-4-measures.mxl');
 
