@@ -46,6 +46,7 @@ async function loadPiece(file) {
       onNote: (modelNote, sourceNote) => S.sourceNotes.set(modelNote.id, sourceNote),
     });
     renderAndMap();
+    document.dispatchEvent(new CustomEvent('piece-loaded', { detail: { file, model: S.model } }));
   } catch (error) {
     S.osmd = null;
     S.model = null;
@@ -57,6 +58,7 @@ async function loadPiece(file) {
     InspectTable.render(null, new Map(), new Map());
     setStatus('No piece loaded');
     toast('Could not open ' + file.name + ': ' + (error instanceof Error ? error.message : String(error)));
+    document.dispatchEvent(new CustomEvent('piece-unloaded'));
   } finally {
     S.loading = false;
   }

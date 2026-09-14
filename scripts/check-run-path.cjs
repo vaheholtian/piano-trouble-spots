@@ -28,7 +28,15 @@ function stripHtmlComments(html) {
 }
 
 const OSMD_CDN_URL = 'https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@2.1.2/build/opensheetmusicdisplay.min.js';
-const EXPECTED_LOCAL_SCRIPTS = ['src/score-model.js', 'src/inspect-table.js', 'src/score-renderer.js'];
+const IDB_CDN_URL = 'https://cdn.jsdelivr.net/npm/idb@8.0.3/build/umd.js';
+const EXPECTED_LOCAL_SCRIPTS = [
+  'src/score-model.js',
+  'src/inspect-table.js',
+  'src/score-renderer.js',
+  'src/midi-capture.js',
+  'src/storage.js',
+  'src/capture-app.js',
+];
 
 function checkIndexHtml() {
   const raw = readFile('index.html');
@@ -42,13 +50,26 @@ function checkIndexHtml() {
   if (cdnOccurrences === 1) ok('exactly one pinned OSMD CDN URL');
   else fail('exactly one pinned OSMD CDN URL', cdnOccurrences + ' occurrences');
 
+  const idbCdnOccurrences = (html.match(new RegExp(IDB_CDN_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+  if (idbCdnOccurrences === 1) ok('exactly one pinned idb CDN URL');
+  else fail('exactly one pinned idb CDN URL', idbCdnOccurrences + ' occurrences');
+
   const localScriptMatches = [...html.matchAll(/<script\s+src="(src\/[a-z-]+\.js)"/gi)].map((m) => m[1]);
   const inOrder = localScriptMatches.length === EXPECTED_LOCAL_SCRIPTS.length &&
     EXPECTED_LOCAL_SCRIPTS.every((expected, i) => localScriptMatches[i] === expected);
   if (inOrder) ok('local script tags in dependency order');
   else fail('local script tags in dependency order', JSON.stringify(localScriptMatches));
 
-  const requiredMarkers = ['accept=".musicxml,.xml,.mxl"', 'id="pieceFile"', 'id="status"', 'id="noteRows"'];
+  const requiredMarkers = [
+    'accept=".musicxml,.xml,.mxl"',
+    'id="pieceFile"',
+    'id="status"',
+    'id="noteRows"',
+    'id="midiInput"',
+    'id="startStop"',
+    'id="liveCount"',
+    'id="sessionList"',
+  ];
   for (const marker of requiredMarkers) {
     if (html.includes(marker)) ok('index.html contains ' + marker);
     else fail('index.html contains ' + marker, 'not found');

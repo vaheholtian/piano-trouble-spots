@@ -14,9 +14,14 @@
   .missing { color: #b00000; font-weight: bold; }
   #toast { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px; background: #b00000; color: #fff; }
   #toast[hidden] { display: none; }
+  .flash { display: inline-block; width: 12px; height: 12px; border-radius: 6px; background: #ccc; }
+  .flash.on { background: #2a2; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@2.1.2/build/opensheetmusicdisplay.min.js"
         integrity="sha384-12lItsNRZQLTAONzjzkiAB2oOKC7L9JPNqWBHro/ug0hLJZTmGxbr0V2JRt8KwC2"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/idb@8.0.3/build/umd.js"
+        integrity="sha384-lLGuFiulNF2N/nqC6IxFZzy3WGfLokEKQD73HN9gCx1vFouvtty5kp+wf20Rrs0Y"
         crossorigin="anonymous"></script>
 </head>
 <body>
@@ -25,6 +30,17 @@
   <span id="status">No piece loaded</span>
 </header>
 <div id="toast" hidden></div>
+<section id="capture">
+  <label>MIDI input <select id="midiInput"></select></label>
+  <span id="midiState">Waiting for MIDI permission...</span>
+  <button id="startStop" type="button">Start</button>
+  <span id="sessionState">Not recording</span>
+  <div>
+    <span id="flash" class="flash"></span>
+    <span id="liveCount">0</span> notes, last <span id="lastNote">-</span>
+  </div>
+  <ol id="sessionList"></ol>
+</section>
 <div id="notation"></div>
 <details id="inspect" open>
   <summary id="inspectSummary">Notes</summary>
@@ -50,5 +66,8 @@
 <script src="src/score-model.js"></script>
 <script src="src/inspect-table.js"></script>
 <script src="src/score-renderer.js"></script>
+<script src="src/midi-capture.js"></script>
+<script src="src/storage.js"></script>
+<script src="src/capture-app.js"></script>
 </body>
 </html>
