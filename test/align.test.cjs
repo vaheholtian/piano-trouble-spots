@@ -368,3 +368,116 @@ test('resolveTunables deep-merges a partial object over the defaults', () => {
 test('resolveTunables(null) returns the defaults', () => {
   assert.equal(Align.resolveTunables(null), Align.DEFAULT_TUNABLES);
 });
+
+// ---- isFinal / stableFields (Task 2 -- finalization, section 5 of docs/analysis-rules.md) -----
+
+test('isFinal: sessionEnded true is always final', () => {
+  assert.equal(Align.isFinal({ startTimeStamp: 0, endTimeStamp: 100 }, [], true), true);
+});
+
+test('isFinal: endTimeStamp null is never final', () => {
+  const f = loadFixture('rung1-clean');
+  assert.equal(Align.isFinal({ ...f.pass, endTimeStamp: null }, f.clicks, false), false);
+});
+
+test('isFinal: no accented click at or after the pass start is not final', () => {
+  const f = loadFixture('rung1-clean');
+  assert.equal(Align.isFinal({ ...f.pass, startTimeStamp: 99999 }, f.clicks, false), false);
+});
+
+test('isFinal boundary: rung1-not-reached pass, clicks through 2500 is false (needs 2950), through 3000 is true', () => {
+  const f = loadFixture('rung1-not-reached');
+  const clicksThrough2500 = f.clicks.filter((c) => c.pageTime <= 2500);
+  assert.equal(Align.isFinal(f.pass, clicksThrough2500, false), false);
+  const clicksThrough3000 = f.clicks.filter((c) => c.pageTime <= 3000);
+  assert.equal(Align.isFinal(f.pass, clicksThrough3000, false), true);
+});
+
+test('isFinal boundary: a timeline through 2500 plus a last click at 2949 is false, at 2950 is true', () => {
+  const f = loadFixture('rung1-not-reached');
+  const base = f.clicks.filter((c) => c.pageTime <= 2500);
+  const extra = { id: 99, sessionId: 1, audioTime: 2.949, pageTime: 2949, bar: 1, beat: 6, bpm: 120, accent: false };
+  assert.equal(Align.isFinal(f.pass, [...base, extra], false), false);
+  const extra2 = { ...extra, pageTime: 2950 };
+  assert.equal(Align.isFinal(f.pass, [...base, extra2], false), true);
+});
+
+test('D-11 review case: rung 1 C D E F, G unplayed, end 2750 -- final and reach status track click coverage', () => {
+  const f = loadFixture('rung1-not-reached');
+  const pass = {
+    ordinal: 1,
+    startSeq: 0,
+    startTimeStamp: 900,
+    endSeq: 3,
+    endTimeStamp: 2750,
+    noteCount: 4,
+    eventCount: 0,
+    notes: [note(0, 60, 1000), note(1, 62, 1500), note(2, 64, 2000), note(3, 65, 2500)],
+  };
+
+  const clicksThrough2500 = f.clicks.filter((c) => c.pageTime <= 2500);
+  assert.equal(Align.isFinal(pass, clicksThrough2500, false), false);
+  const resultAt2500 = Align.alignPass(f.scoreModel, pass, clicksThrough2500);
+  assert.equal(resultAt2500.notes['m1-s1-v1-b4_1-p67'].reason, 'not-reached');
+
+  const clicksThrough3000 = f.clicks.filter((c) => c.pageTime <= 3000);
+  assert.equal(Align.isFinal(pass, clicksThrough3000, false), false);
+  const resultAt3000 = Align.alignPass(f.scoreModel, pass, clicksThrough3000);
+  assert.equal(resultAt3000.notes['m1-s1-v1-b4_1-p67'].status, 'missed');
+
+  const clicksThrough3500 = f.clicks.filter((c) => c.pageTime <= 3500);
+  assert.equal(Align.isFinal(pass, clicksThrough3500, false), true);
+  const resultAt3500 = Align.alignPass(f.scoreModel, pass, clicksThrough3500);
+  assert.equal(resultAt3500.notes['m1-s1-v1-b4_1-p67'].status, 'missed');
+});
+
+test('stableFields removes expectedTime from unreached slots only, and never mutates its input', () => {
+  const f = loadFixture('rung1-not-reached');
+  const result = Align.alignPass(f.scoreModel, f.pass, f.clicks);
+  const snapshot = JSON.parse(JSON.stringify(result));
+  const stable = Align.stableFields(result);
+  assert.deepEqual(result, snapshot, 'stableFields does not mutate its input');
+  for (const slot of stable.slots) {
+    if (!slot.reached) assert.equal(Object.prototype.hasOwnProperty.call(slot, 'expectedTime'), false);
+    else assert.equal(Object.prototype.hasOwnProperty.call(slot, 'expectedTime'), true);
+  }
+});
+
+test('final-prefix property: every fixture, every final click prefix gives the same stableFields as the whole timeline', () => {
+  for (const name of fixtureNames) {
+    const f = loadFixture(name);
+    const full = Align.stableFields(Align.alignPass(f.scoreModel, f.pass, f.clicks, f.tunables || undefined));
+    let sawFinal = false;
+    for (let k = 1; k <= f.clicks.length; k++) {
+      const prefix = f.clicks.slice(0, k);
+      if (!Align.isFinal(f.pass, prefix, false, f.tunables || undefined)) continue;
+      sawFinal = true;
+      const prefixResult = Align.stableFields(Align.alignPass(f.scoreModel, f.pass, prefix, f.tunables || undefined));
+      assert.deepEqual(prefixResult, full, name + ' final prefix k=' + k + ' stableFields equals the whole timeline');
+      for (let i = 0; i < full.slots.length; i++) {
+        if (full.slots[i].reached) {
+          assert.equal(prefixResult.slots[i].expectedTime, full.slots[i].expectedTime, name + ' reached slot expectedTime equal');
+        }
+      }
+    }
+    assert.ok(sawFinal, name + ' has at least one final prefix');
+  }
+});
+
+test('the tail case: not final until the timeline includes the origin click; whole results differ, stableFields agree', () => {
+  const f = loadFixture('rung1-clean');
+  const pass = { ordinal: 1, startSeq: 0, startTimeStamp: 3600, endSeq: 0, endTimeStamp: 3800, noteCount: 1, eventCount: 0, notes: [note(0, 60, 3700)] };
+
+  const beforeOrigin = f.clicks.filter((c) => c.pageTime < 6000);
+  assert.equal(Align.isFinal(pass, beforeOrigin, false), false, 'no accented click at or after the pass start yet');
+
+  const atOrigin = f.clicks.filter((c) => c.pageTime <= 6000);
+  assert.equal(Align.isFinal(pass, atOrigin, false), true, 'final as soon as the origin click at 6000 arrives');
+
+  const fullResult = Align.alignPass(f.scoreModel, pass, f.clicks);
+  const prefixResult = Align.alignPass(f.scoreModel, pass, atOrigin);
+  assert.equal(prefixResult.slots[1].expectedTime, null);
+  assert.equal(fullResult.slots[1].expectedTime, 6500);
+  assert.notDeepEqual(fullResult, prefixResult);
+  assert.deepEqual(Align.stableFields(fullResult), Align.stableFields(prefixResult));
+});
