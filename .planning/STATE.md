@@ -1,13 +1,13 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 2
-current_phase_name: Click and Capture
-status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-09-14T04:04:35.992Z"
-last_activity: 2026-09-13
-last_activity_desc: Phase 2 execution started
-state_head: c8fa4bd12b61502cc6e160b2225e9d3a431c17d4
+current_phase: 3
+current_phase_name: What You Actually Played
+status: planning
+stopped_at: Phase 3 context gathered
+last_updated: "2026-09-14T17:19:25.647Z"
+last_activity: 2026-09-14
+last_activity_desc: User reports Phase 2 finished; redirected downstream planning toward early repeated-mistake feedback
+state_head: bce6f89c0322d76de49ca3bd6d34c5284ca483c7
 progress:
   total_phases: 7
   completed_phases: 0
@@ -20,25 +20,25 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-13)
+See: .planning/PROJECT.md (updated 2026-09-14)
 
 **Core value:** After many repetitions of a passage, the score shows the handful of spots and habits worth working on, with enough repetitions behind each one that the pianist trusts it.
-**Current focus:** Phase 2 — Click and Capture
+**Current focus:** Phase 3 — pitch alignment and a minimal repeated-mistake view, first on right-hand C D E F G
 
 ## Current Position
 
-Phase: 2 (Click and Capture) — EXECUTING
-Plan: 4 of 4
-Status: Ready to execute
-Last activity: 2026-09-13 — Phase 2 execution started
+Phase: 3 — What You Actually Played
+Plan: Not started
+Status: Ready for discussion and planning against the revised ROADMAP.md
+Last activity: 2026-09-14 — user reported Phase 2 finished; planning direction revised
 
-Progress: [░░░░░░░░░░] 0%
+Progress: 2/7 phases ([░░░░░░░░░░] 0%); Phase 2 completion is user-reported. Six of seven existing plans have summaries. The final Phase 2 summary and measured checkpoint results are not present locally; reconcile that record when available without inventing evidence or re-executing completed work solely for this planning edit.
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
+- Total plans with completion summaries: 6
 - Average duration: —
 - Total execution time: —
 
@@ -47,6 +47,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 3 | - | - |
+| 02 | 3 documented; final record pending | - | - |
 
 **Recent Trend:**
 
@@ -72,10 +73,13 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Roadmap]: Six vertical-MVP phases; every phase must be playable at the FP-60X before it counts as done (VRFY-01 applies to all, mapped to Phase 6 for traceability)
+- [Roadmap]: Seven phases; every phase is tried at the FP-60X (VRFY-01 applies to all, mapped to Phase 7 for traceability)
 - [Roadmap]: Durable storage (HIST-01) lands in Phase 2 with capture, not later — raw MIDI events are the source of truth and must never be lost to a closed tab
 - [Roadmap]: Alignment (Phase 3) and timing (Phase 4) are separate phases so the alignment algorithm is proven at the piano before anything is built on top of it
-- [Roadmap]: v2 items (per-bar tempo drift, relative dynamics, hands-separate, playback) stay out of all six phases
+- [Roadmap]: v2 items (per-bar tempo drift, relative dynamics, hands-separate, playback) stay out of all seven phases
+- [Direction 2026-09-14]: Phase 3 includes basic pitch-mistake counts (early AGGR-01/03 slice) on rung 1 before the user advances through the ladder. Full aggregate acceptance remains Phase 5
+- [Direction 2026-09-14]: Before Phase 3 implementation, document pass-origin, interrupted/uncertain-region, denominator, and tempo-comparison rules from ROADMAP.md. Preserve raw data; display unassessed counts/reasons instead of forced verdicts
+- [Direction 2026-09-14]: Phase 5 must validate choosing a problem, practising it, and comparing fresh passes at the same tempo before Phase 6. No trend dashboard is required
 - [Phase 01]: Score model note ids are structural (m{measure}-s{staff}-v{voice}-b{onset}-p{midi}), reproducible across extractions (D-09)
 - [Phase 01]: Notehead SVG map uses gNote.getNoteheadSVGs()[vfnoteIndex] (per-pitch notehead), never getSVGGElement() (shared chord group) - closes HIGH-severity review finding
 - [Phase 01]: jsdom globals installed via Object.defineProperty with descriptor-preserving restore(), not plain assignment - closes MEDIUM-severity Node 24 navigator review finding
@@ -93,11 +97,12 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- Plan Phase 3 from the revised ROADMAP.md and REQUIREMENTS.md; completed Phase 2 context remains historical capture intent, not authority to override the new downstream interpretation rules
+- Reconcile the missing Phase 2 final summary when its checkpoint observations are available. User report establishes completion for planning, not numerical calibration evidence
 
 ### Blockers/Concerns
 
-- [Phase 2]: Research disagrees on whether Web MIDI timestamps and AudioContext time share an origin — must be settled empirically at the piano before Phase 4 timing means anything
+- [Phase 4]: Phase 2 stores clock pairs and observed playing medians, but final piano measurements are not recorded locally. Do not infer zero latency or subtract the playing median automatically. Establish clock/output-latency evidence before timing verdicts; Phase 3 pitch work can proceed
 - [Phase 3]: Alignment cost weights (onset deviation, pitch mismatch, gap penalty) are unknown; treat as tunable data derived from fixture failures, not hardcoded constants
 
 ## Deferred Items
@@ -110,6 +115,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-14T04:04:35.949Z
-Stopped at: Completed 02-03-PLAN.md
-Resume file: None
+Last session: 2026-09-14T17:19:25.473Z
+Stopped at: Phase 3 context gathered
+Resume file: .planning/phases/03-what-you-actually-played/03-CONTEXT.md
