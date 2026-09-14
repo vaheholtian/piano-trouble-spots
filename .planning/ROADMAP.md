@@ -2,7 +2,7 @@
 
 ## Overview
 
-Seven phases build one loop and nothing else: load a score, drill it to a click many times, and see the handful of spots worth working on painted on the actual notation. Each phase is a vertical slice the user can sit down and try at the Roland FP-60X over USB — never a component finished in isolation. Phase 1 puts real notation on screen from tiny exercise files (everything downstream paints onto it or compares against it). Phase 2 makes a practice session recordable and durable, and settles the MIDI-clock vs audio-clock question empirically at the piano before anything depends on timestamp correctness. Phase 3 proves alignment on a single pass. Phase 4 adds early/late. Phase 5 is the actual product — the aggregate across 20+ passes. Phase 6 brings in real pieces and selecting the bars to drill, once detection is trusted. Phase 7 makes it survive a browser reset and span weeks.
+Seven phases build one loop: load a score, drill it to a click many times, and see the handful of spots worth working on painted on the actual notation. Phases 1 and 2 provide notation and durable capture. Phase 3 proves pitch alignment and a minimal repeated-mistake view, starting with right-hand C D E F G before advancing through the exercise ladder. Phase 4 adds trustworthy early/late feedback. Phase 5 completes the aggregate display and tests whether it helps the user choose a problem, practise it, and assess the result. Phase 6 brings in real pieces and bar selection only after that practice loop is useful. Phase 7 adds export/import and access to past sessions. Every phase is tried at the FP-60X over USB.
 
 **Detection accuracy first:** Through Phase 5 the "passage" is always the entire loaded file, and the files are tiny exercises the user makes in MuseScore so every note can be checked by eye and ear. Bar selection, pickup-bar numbering, repeats, and real multi-page pieces wait until Phase 6.
 
@@ -13,6 +13,12 @@ Seven phases build one loop and nothing else: load a score, drill it to a click 
 3. Both hands together
 4. A chord or two
 5. Four bars of a real piece
+
+**Execution within Phases 3–5:** The ladder is an ordered progression, not only an end-of-phase test suite. In Phase 3, get single-pass pitch marks and basic repeated-mistake counts working on rung 1, then have the user check them at the piano before advancing to left hand, both hands, chords, and four bars. Fix false marks at the current rung before expanding. Phase 4 follows the same order for timing. Earlier rungs remain regression checks. Do not defer the first aggregate experiment until Phase 5 or require polished heat maps before trying it.
+
+**Interpretation contract (decide in Phase 3 before implementation):** Keep all raw events and passes. Separately define which score-note opportunities can be assessed. An interrupted or uncertain region is reported as unassessed with a reason, never silently counted as clean or missed; distinguish it from a confidently established omission within an attempted passage. Counts show mistakes / assessed opportunities plus unassessed counts. Compare passes at the same constant tempo; separate different tempos and label within-pass tempo changes as outside the initial aggregate comparison. Document these rules with examples before coding. This is analysis over Phase 2 data, not a new capture workflow or a discard feature.
+
+**Pass origin and timing evidence:** Phase 3 planning must specify how a pass is associated with a metronome downbeat, including a missed first note, a late start, and several plausible downbeats. The recorded click timeline remains the reference; choosing an origin must not erase an initial timing error. Ambiguous origins remain unassessed. Use that same origin policy in Phase 4. The stored on-click playing median is a diagnostic observation, not proof of device latency and not an automatic correction. Before timing verdicts, establish the clock/output-latency comparison with independent evidence and retain the original observations. These instructions govern downstream analysis where older Phase 2 context leaves interpretation to later phases; preserve completed capture and its raw records.
 
 **Verification:** VRFY-01 is mapped to Phase 7 for traceability, but it applies to every phase — each phase below carries "user tried it at the FP-60X over USB" as an explicit success criterion. A phase is not done until the user has played it.
 
@@ -28,8 +34,8 @@ Seven phases build one loop and nothing else: load a score, drill it to a click 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Score on Screen** - Load a tiny MusicXML exercise, see real notation, note model ready for alignment (completed 2026-09-13)
-- [ ] **Phase 2: Click and Capture** - Metronome, MIDI recording, manual pass marking, nothing ever lost
-- [ ] **Phase 3: What You Actually Played** - One pass aligned to the score; wrong, missed, and extra notes marked on the notation
+- [x] **Phase 2: Click and Capture** - Completed per user report on 2026-09-14; final checkpoint evidence has not yet been recorded locally
+- [ ] **Phase 3: What You Actually Played** - Pitch mistakes and basic repeated-mistake counts, proven one exercise rung at a time
 - [ ] **Phase 4: Early and Late** - Onset deviation against the click, shown per note
 - [ ] **Phase 5: Habits, Not Slips** - Aggregate across every pass in the session, painted on the score with counts
 - [ ] **Phase 6: Real Pieces and Passages** - Load a full piece and select the bars to drill
@@ -81,7 +87,9 @@ Plans:
   4. Closing the tab and reopening restores the piece, the passage, and every recorded repetition with its raw note-on, note-off, velocity, and timestamp data unmodified
   5. User ran a real 10+ pass drill at the FP-60X over USB on a ladder file and every pass was captured as its own repetition with nothing missing
 
-**Plans:** 3/4 plans executed
+**Status:** User reported Phase 2 finished on 2026-09-14. Three of four plan summaries are present; `02-04-SUMMARY.md` and its measured piano results are not present locally. Preserve this distinction: do not invent checkpoint responses or treat an unknown calibration result as zero. Reconcile the final record when available; this planning revision does not re-execute Phase 2.
+
+**Plans:** 3/4 plans documented; phase complete per user report
 
 Plans:
 **Wave 1**
@@ -102,18 +110,43 @@ Plans:
 
 ### Phase 3: What You Actually Played
 
-**Goal**: After a single pass, the user sees on the notation which notes were wrong, missed, or extra
+**Goal**: User can trust pitch-mistake marks and basic counts across repeated attempts, first on right-hand C D E F G and then on each harder exercise
 **Mode:** mvp
 **Depends on**: Phase 2
-**Requirements**: ANLZ-01, ANLZ-03
+**Requirements**: ANLZ-01, ANLZ-03; early pitch-only slice of AGGR-01 and AGGR-03 (full acceptance remains Phase 5)
 **Success Criteria** (what must be TRUE):
 
   1. Synthetic performances with known mistakes (fixtures) produce the expected wrong/missed/extra classification in tests that run with no DOM, MIDI, or audio present
-  2. After one recorded pass, every score note in the passage is classified as played, missed, or wrong-pitch, and extra played notes are flagged, without chords or small timing sloppiness producing false mistakes
+  2. After one recorded pass, assessable score notes are classified as played, missed, or wrong-pitch, and extra played notes are flagged, without chords or small timing sloppiness producing false mistakes. Uncertain alignment and interrupted regions are visibly unassessed, with reasons; they are not forced into a mistake classification
   3. Those classifications appear painted on the rendered notation at the right noteheads, not in a separate list
   4. User played one clean pass and one deliberately wrong pass at the FP-60X on each ladder file, and the marks matched what they actually did
+  5. Before advancing beyond rung 1, user played 10+ passes at one tempo with one repeated pitch mistake and one one-off slip. Selecting a marked score note shows plain-language counts with assessed and unassessed totals, and the user confirms the recurring mistake is distinguishable from the slip. Reuse this minimal view as the ladder expands; bar shading, intensity scales, timing statistics, and ranked lists are not needed for this experiment
+  6. Fixture examples cover a missing first note, late entry, repeated pitches, an extra note, an interrupted pass, ambiguous alignment, and tempo changes. The pass-origin and counting rules above explain each result, and these rules are checked on relevant piano examples before the next rung
 
-**Plans**: TBD
+**Plans:** 6 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Interpretation contract docs/analysis-rules.md (every rule, worked rung-1 examples, cost model, shapes, tunables), twelve hand-derived rung-1 fixtures with a shape test, and the headless-Chrome paint harness (red until the tracer)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-02-PLAN.md — Tracer: one marked pass of C D F F G goes align (fixed origin, slots, DP) → aggregate (tempo groups, counts) → paint (notehead children through svgMap) → red E4 on the notation and the detail sentence on click; repaint after every mark, on load, after resize; all twelve fixtures green
+
+**Wave 3** *(blocked on Wave 2; 03-03 and 03-04 run in parallel, disjoint files)*
+
+- [ ] 03-03-PLAN.md — Engine: ambiguity from the co-optimal edge set (repeated pitches, messy pass), chords per notehead on rung 4, both hands on rung 3
+- [ ] 03-04-PLAN.md — Display: single-pass view and the way back, tempo-group selector, extra-note + glyphs with counts and sentences, seven-line paint harness
+
+**Wave 4** *(blocked on 03-03)*
+
+- [ ] 03-05-PLAN.md — Engine: restart without a mark, tempo change inside a pass, no-origin edge, and the ladder regression test through the real OSMD parser on all five rungs
+
+**Wave 5** *(blocked on 03-04 and 03-05)*
+
+- [ ] 03-06-PLAN.md — Phase gate (all node/npm checks, README and piano checklist) and the two blocking at-the-piano checkpoints in ladder order: rung 1 single passes plus the twelve-pass habit-versus-slip experiment, then rungs 2 to 5
+
 **UI hint**: yes
 
 ### Phase 4: Early and Late
@@ -124,10 +157,11 @@ Plans:
 **Requirements**: ANLZ-02
 **Success Criteria** (what must be TRUE):
 
-  1. Every correctly played note reports its onset deviation from the metronome-defined expected time in milliseconds, with direction
+  1. Every confidently matched, correctly played note with an established pass origin reports its onset deviation from the metronome-defined expected time in milliseconds, with direction. Uncertain notes remain unassessed
   2. Each note is classified early, on time, or late using a tolerance the user can adjust, and changing the tolerance re-classifies the stored pass without replaying it
   3. Timing marks appear on the score alongside Phase 3's wrong/missed/extra marks without hiding them
   4. User played a pass at the FP-60X deliberately rushing one bar and dragging another, and the app flagged those bars in the right direction
+  5. A deliberately late first note or omitted first note does not shift the expected timeline to hide the error. Timing verification records the clock/output-latency evidence separately from the user's observed playing offsets; no stored playing median is automatically subtracted. If timing remains uncertain, keep pitch feedback usable and resolve the timing evidence before claiming this phase complete
 
 **Plans**: TBD
 
@@ -139,11 +173,12 @@ Plans:
 **Requirements**: AGGR-01, AGGR-02, AGGR-03
 **Success Criteria** (what must be TRUE):
 
-  1. Each score note's result is reported across all passes in the session as a count and rate, for example "missed in 6 of 22 passes", rather than per-take verdicts
+  1. Extend Phase 3's pitch counts to the full aggregate, including timing: each score note shows a count and rate over assessed opportunities at the same constant tempo, for example "missed in 6 of 22 assessed passes; 2 unassessed". All raw passes remain available; different tempos are separated and passes with within-pass tempo changes are labelled outside the initial comparison
   2. The notation shows the aggregate: noteheads coloured by dominant mistake type with intensity by rate, and bars shaded by their worst per-note rate
   3. Hovering or clicking a marked note or bar gives plain-language detail — what kind of mistake, how many passes, typical timing offset
   4. A one-off slip is visibly distinguishable from a habit, so the user can tell which marks to trust
   5. User drilled the four-bar ladder file 20+ times at the FP-60X over USB and agreed the highlighted spots are the ones actually worth practising
+  6. Before Phase 6, user uses that feedback to choose one problem, practises it specifically, then records a fresh set of passes on the same four bars at the same tempo. Compare the two sets separately (two sessions and a recorded observation are sufficient; no trend dashboard). Record the chosen problem, before/after counts, and whether the feedback matches what the user heard and helps choose the next practice action. Improvement is not a guaranteed pass condition: unchanged or worse playing must be reported honestly. Misleading or unusable feedback sends work back to the relevant analysis/display step before expanding to full pieces
 
 **Plans**: TBD
 **UI hint**: yes
@@ -188,8 +223,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Score on Screen | 3/3 | Complete    | 2026-09-13 |
-| 2. Click and Capture | 3/4 | In Progress|  |
-| 3. What You Actually Played | 0/TBD | Not started | - |
+| 2. Click and Capture | 3/4 documented | Complete per user; final evidence record pending | 2026-09-14 |
+| 3. What You Actually Played | 0/6 | Planned | - |
 | 4. Early and Late | 0/TBD | Not started | - |
 | 5. Habits, Not Slips | 0/TBD | Not started | - |
 | 6. Real Pieces and Passages | 0/TBD | Not started | - |
@@ -198,3 +233,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 ---
 *Roadmap created: 2026-09-13*
 *Reshaped 2026-09-13 during Phase 1 discussion: bar selection moved to Phase 6, verification ladder added*
+*Redirected 2026-09-14: early pitch aggregate in Phase 3, ordered piano gates, explicit interpretation rules, and a practice-and-recheck gate before Phase 6; phase numbering and v2 scope retained.*
