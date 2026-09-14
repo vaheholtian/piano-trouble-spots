@@ -5,7 +5,8 @@
     "test": "node --test \"test/*.test.cjs\"",
     "check": "node scripts/check-run-path.cjs",
     "check:map": "node scripts/check-svg-map.cjs",
-    "check:capture": "node scripts/check-capture-roundtrip.cjs"
+    "check:capture": "node scripts/check-capture-roundtrip.cjs",
+    "check:paint": "node scripts/check-paint.cjs"
   },
   "devDependencies": {
     "fake-indexeddb": "6.2.5",
