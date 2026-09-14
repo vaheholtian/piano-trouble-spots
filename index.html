@@ -43,7 +43,14 @@
   <ol id="sessionList"></ol>
   <details id="readout">
     <summary>Clock readout</summary>
-    <dl id="readoutBody"></dl>
+    <dl id="readoutBody">
+      <dt>Last note vs nearest click</dt><dd id="offsetLast">-</dd>
+      <dt>Median of last 20</dt><dd id="offsetMedian">-</dd>
+      <dt>Notes measured</dt><dd id="offsetCount">0</dd>
+      <dt>AudioContext baseLatency</dt><dd id="latencyBase">-</dd>
+      <dt>AudioContext outputLatency</dt><dd id="latencyOutput">-</dd>
+    </dl>
+    <p>Positive means late. Play single notes exactly on the click: the median should sit near 0 ms. A steady offset such as +40 ms is a clock or latency problem, not a playing habit.</p>
   </details>
 </section>
 <div id="notation"></div>

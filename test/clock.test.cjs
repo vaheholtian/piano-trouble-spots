@@ -22,7 +22,10 @@ test('offsetMs is the signed millisecond gap between a page-clock time and an ex
 });
 
 test('nearestClick picks the closest click time and reports its signed offset', () => {
-  assert.deepEqual(K.nearestClick(2.74, [2.5, 2.75, 3.0]), { index: 1, clickTime: 2.75, offsetMs: -10 });
+  const result = K.nearestClick(2.74, [2.5, 2.75, 3.0]);
+  assert.equal(result.index, 1);
+  assert.equal(result.clickTime, 2.75);
+  assert.ok(Math.abs(result.offsetMs - -10) < 1e-9);
 });
 
 test('nearestClick breaks an exact tie in favor of the earlier click', () => {

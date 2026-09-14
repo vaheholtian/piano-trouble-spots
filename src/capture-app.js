@@ -28,6 +28,9 @@ globalThis.CaptureApp = (() => {
     pair: null,
     clicks: [],
     bpm: 100,
+    offsets: [],
+    offsetCount: 0,
+    resampleTimer: null,
   };
 
   function setMidiState(text) {
@@ -167,6 +170,45 @@ globalThis.CaptureApp = (() => {
     });
   }
 
+  // D-10: a diagnostic number and a running median only -- no per-note judgement of any kind.
+  function renderReadout() {
+    const last = C.offsets[C.offsets.length - 1];
+    if (last === undefined) {
+      $('offsetLast').textContent = '-';
+    } else {
+      const rounded = Math.round(last);
+      $('offsetLast').textContent = (rounded >= 0 ? '+' : '') + rounded + ' ms';
+    }
+    const median = Clock.median(C.offsets);
+    $('offsetMedian').textContent = median === null ? '-' : Math.round(median) + ' ms';
+    $('offsetCount').textContent = String(C.offsetCount);
+    $('latencyBase').textContent = C.audio ? (C.audio.baseLatency * 1000).toFixed(1) + ' ms' : '-';
+    $('latencyOutput').textContent = C.audio ? (C.audio.outputLatency * 1000).toFixed(1) + ' ms' : '-';
+  }
+
+  // D-11: stores the calibration alongside a fresh clock pair; never applied to any stored
+  // timestamp. Called every 30s during a session and once more, as the final sample, at Stop.
+  async function resample() {
+    if (!C.session || !C.audio) return;
+    const pair = { ...Clock.samplePair(performance.now(), C.audio.currentTime), sampledAt: new Date().toISOString() };
+    C.pair = pair;
+    C.session.clockPairs.push(pair);
+    C.session.calibration = { medianOffsetMs: Clock.median(C.offsets), noteCount: C.offsetCount };
+    const p = Storage.updateSession(C.db, C.session.id, {
+      clockPairs: C.session.clockPairs,
+      calibration: C.session.calibration,
+      latency: C.session.latency,
+    });
+    C.pending.add(p);
+    try {
+      await p;
+    } catch (error) {
+      toast(error instanceof Error ? error.message : String(error));
+    } finally {
+      C.pending.delete(p);
+    }
+  }
+
   function onMidiEvent(record) {
     if (record.type === 'noteon') {
       C.liveCount += 1;
@@ -196,6 +238,18 @@ globalThis.CaptureApp = (() => {
       }).finally(() => {
         C.pending.delete(p);
       });
+
+      if (record.type === 'noteon' && !stored.marker && C.metronome && C.pair) {
+        const candidates = C.clicks.map((c) => c.audioTime).concat([C.metronome.nextClickTime()]);
+        const t = Clock.toAudioContextTime(record.timeStamp, C.pair);
+        const nearest = Clock.nearestClick(t, candidates);
+        if (nearest) {
+          C.offsets.push(nearest.offsetMs);
+          if (C.offsets.length > 20) C.offsets.shift();
+          C.offsetCount += 1;
+          renderReadout();
+        }
+      }
     }
   }
 
@@ -246,8 +300,12 @@ globalThis.CaptureApp = (() => {
     C.events = [];
     C.clicks = [];
     C.bpm = bpm;
+    C.offsets = [];
+    C.offsetCount = 0;
     C.metronome = Metronome.create(C.audio, { timeSignatureFor, onClick });
     C.metronome.start(bpm);
+    C.resampleTimer = setInterval(resample, 30000);
+    renderReadout();
     await Storage.putSetting(C.db, 'bpm:' + C.pieceId, bpm);
     $('startStop').textContent = 'Stop';
     $('sessionState').textContent = 'Recording session ' + id + ' at ' + bpm + ' BPM';
@@ -267,8 +325,11 @@ globalThis.CaptureApp = (() => {
       C.metronome.stop();
       C.metronome = null;
     }
-    const finalPair = { ...Clock.samplePair(performance.now(), C.audio.currentTime), sampledAt: new Date().toISOString() };
-    C.session.clockPairs.push(finalPair);
+    if (C.resampleTimer !== null) {
+      clearInterval(C.resampleTimer);
+      C.resampleTimer = null;
+    }
+    await resample();
     await flush();
     await Storage.updateSession(C.db, id, {
       endedAt: new Date().toISOString(),
@@ -276,6 +337,7 @@ globalThis.CaptureApp = (() => {
       endReason,
       clockPairs: C.session.clockPairs,
       latency: C.session.latency,
+      calibration: C.session.calibration,
     });
     C.session = null;
     $('startStop').textContent = 'Start';

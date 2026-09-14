@@ -26,7 +26,40 @@ globalThis.Clock = (() => {
     return pair.performanceNow + (audioSeconds - pair.audioContextTime) * 1000;
   }
 
-  return { samplePair, toAudioContextTime, toPageTime };
+  function offsetMs(pageMs, clickAudioTime, pair) {
+    return (toAudioContextTime(pageMs, pair) - clickAudioTime) * 1000;
+  }
+
+  // Scans for the click time closest to audioTime; on an exact tie keeps the earlier index
+  // (only replaces the current best on a STRICTLY smaller diff).
+  function nearestClick(audioTime, clickTimes) {
+    if (clickTimes.length === 0) return null;
+    let bestIndex = 0;
+    let bestDiff = Math.abs(audioTime - clickTimes[0]);
+    for (let i = 1; i < clickTimes.length; i++) {
+      const diff = Math.abs(audioTime - clickTimes[i]);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIndex = i;
+      }
+    }
+    return {
+      index: bestIndex,
+      clickTime: clickTimes[bestIndex],
+      offsetMs: (audioTime - clickTimes[bestIndex]) * 1000,
+    };
+  }
+
+  // Never mutates its input (sorts a copy).
+  function median(values) {
+    if (values.length === 0) return null;
+    const sorted = values.slice().sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 0) return (sorted[mid - 1] + sorted[mid]) / 2;
+    return sorted[mid];
+  }
+
+  return { samplePair, toAudioContextTime, toPageTime, offsetMs, nearestClick, median };
 })();
 
 if (typeof module !== 'undefined') module.exports = globalThis.Clock;
