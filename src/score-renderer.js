@@ -64,7 +64,10 @@ async function loadPiece(file) {
 
 async function openFile(event) {
   const file = event.target.files[0];
-  if (!file || S.loading) return; // a second selection during a load is ignored
+  if (!file || S.loading) {
+    event.target.value = ''; // reset even on the ignored path, so re-selecting the same
+    return;                  // file (the retry) still fires a change event
+  }
   try {
     await loadPiece(file);
   } finally {
