@@ -8,6 +8,8 @@ Practice tool that shows a pianist where they went wrong in a passage. Being reb
 
 Double-click `index.html` to open it in Chrome. Internet is needed the first time, to fetch OpenSheetMusicDisplay from jsDelivr; Chrome caches it afterwards. No server, no build step.
 
+The app asks once for MIDI permission (Chrome's Allow/Block prompt) - click Allow. Pick your MIDI input from the dropdown; it lists connected devices and remembers the last one you used. Starting the metronome (Start) needs a piece already loaded and a BPM set (20-300); press Start to hear the click and record, Stop to end the session. Pressing B7 and C8 together (the two highest keys), or the spacebar, marks a pass boundary. Everything played - every raw MIDI message, every click, every pass - is saved to the browser's IndexedDB as it happens, not buffered for later, so nothing is lost if the tab closes unexpectedly. Reopening `index.html` restores the last piece and lists every pass of any session, including one that was interrupted by an unplanned tab close.
+
 ## Test
 
 ```
@@ -20,10 +22,12 @@ Tests parse the verification-ladder MusicXML files through the real OpenSheetMus
 ## Developer checks
 
 - `npm run check` — shell-neutral static gates for the `file://` run path: no ES-module script tags, the pinned OSMD and idb CDN URLs, dependency-ordered local scripts, no ES-module syntax in `src/`.
-- `npm run check:map` — drives real headless Chrome over the DevTools protocol to prove every ladder file's noteId-to-notehead map is complete, distinct per pitch, and survives a resize re-render.
-- `npm run check:capture` — drives real headless Chrome with a fake MIDI input over the DevTools protocol: records a session, reloads, and proves the piece and every raw MIDI event are restored unmodified from IndexedDB.
+- `npm run check:map` — drives real headless Chrome over the DevTools protocol to prove every ladder file's noteId-to-notehead map is complete, distinct per pitch, and survives a resize re-render. Must still pass with the capture transport controls added to the page.
+- `npm run check:capture` — drives real headless Chrome with a fake MIDI input over the DevTools protocol: records a session, reloads, and proves the piece, every raw MIDI event, the click timeline, and pass boundaries are restored unmodified from IndexedDB.
 
 All three are plain `node` scripts and run identically from PowerShell, cmd, or Git Bash.
+
+The pass-marker key pair defaults to B7 and C8 and is stored as the `markerKeys` setting in IndexedDB; it can be changed in DevTools if a piece ever needs those two keys for playing.
 
 ## Verification ladder
 

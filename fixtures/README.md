@@ -101,3 +101,87 @@ fingerprint is a defect — report it, do not explain it away.
 4. Open a file that is not MusicXML and confirm the app recovers: a red toast
    appears, the notation and table clear, the status reads "No piece loaded",
    and opening rung 1 again works normally afterward.
+
+## Phase 2 - click and capture at the piano
+
+Keep this section open at the piano. It covers granting MIDI, picking the
+FP-60X, the metronome and clock readout, marking passes, and the two
+checkpoint scenarios with the numbers you should see.
+
+### First run - granting MIDI
+
+The first time you open `index.html`, Chrome shows an Allow/Block prompt for
+MIDI on the page. Click Allow. If the MIDI state line ever says permission
+denied, click the site info icon in the address bar, allow MIDI for the page,
+and reload.
+
+### Finding the FP-60X
+
+The FP-60X should appear in the MIDI input list with the state
+`Connected: <name>`. If the list is empty:
+
+- Check the USB cable is plugged in at both ends and the piano is powered on.
+- Close any other program or browser tab that might already be using MIDI
+  (a DAW, another instance of this app, a MIDI monitor utility) - Windows
+  MIDI drivers can grant exclusive access to a single client, and closing
+  other MIDI apps is often what makes the piano reappear.
+- Reload the page after closing the other program.
+
+### BPM, Start/Stop, and the live indicator
+
+The BPM field accepts 20-300. Press Start to hear a steady Web Audio click
+with beat 1 accented (a higher pitch); press Stop to end the session. While
+recording, the live indicator shows the note count for the current pass, the
+last note played and its velocity, and a brief green flash on every note-on.
+None of this is graded - it only confirms notes are arriving.
+
+### Marking passes
+
+Between passes, press B7 and C8 together - the two highest keys on the
+keyboard - or press the spacebar on the laptop. Either one ends the current
+pass and starts the next; the pass list shows `Pass N - K notes` live, with
+the pass in progress marked "(in progress)". The sustain pedal never marks
+anything, even if you hold it through a mark.
+
+### Reading the Clock readout
+
+Expand "Clock readout". Positive means late. Play single notes exactly on
+the click and expect the median to settle near 0 ms. A steady non-zero
+value - for example a median that stays around +40 ms no matter what you
+play - is a clock or latency finding to write down for a later phase, not a
+playing habit to explain away.
+
+### Scenario A - the click and the clock
+
+1. Open `fixtures/01-right-hand.musicxml`, set BPM to 80, press Start.
+2. Play C4 exactly on the click, 8 times. Read the median from the Clock
+   readout and write it down (expect it within about ±25 ms of 0), along
+   with the AudioContext base and output latency numbers shown underneath.
+3. Change BPM to 120 while the session runs; the click should speed up
+   without stopping or changing the session. Play 8 more notes on the click;
+   the median should stay close to what you wrote down.
+4. Switch to another window and leave the tab in the background for three minutes
+   with the click still running. Come back and confirm the click is
+   still steady, then play 8 more notes on the click - the median should not
+   have moved by more than about 10 ms.
+5. Press Stop, fully quit Chrome, and reopen `index.html`. Note whether
+   Chrome asks for MIDI permission again (either answer is fine - just write
+   it down) and confirm the FP-60X reconnects.
+
+### Scenario B - a real 10+ pass drill
+
+1. Open `fixtures/01-right-hand.musicxml`, set BPM to 80, press Start.
+2. Play the bar cleanly, then press B7 and C8 together. A clean pass reads
+   `Pass 1 - 5 notes`; a pass with one wrong note still reads 5 notes (a
+   wrong note is still a note - the counts are honest, not graded); a pass
+   with one extra note reads 6.
+3. Repeat for at least 10 passes, marking most with B7+C8 and at least one
+   with the spacebar instead. Hold the sustain pedal through one full pass -
+   it must not split the pass.
+4. Press Stop and confirm every pass you played is listed, in order, with
+   the counts you expect, and no trailing empty pass after the last mark.
+5. Close the tab **without pressing Stop** at least once during your
+   drilling, then reopen `index.html`. The interrupted session should be
+   listed as reopened with all of its passes intact and the click silent.
+6. Reopen the tab normally (after Stop) and confirm the piece and every pass
+   from step 4 are restored exactly.
