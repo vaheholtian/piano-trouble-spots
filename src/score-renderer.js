@@ -56,7 +56,7 @@ async function loadPiece(file) {
     $('notation').replaceChildren();
     InspectTable.render(null, new Map(), new Map());
     setStatus('No piece loaded');
-    toast('Could not open ' + file.name + ': ' + error.message);
+    toast('Could not open ' + file.name + ': ' + (error instanceof Error ? error.message : String(error)));
   } finally {
     S.loading = false;
   }
