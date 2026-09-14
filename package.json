@@ -8,7 +8,9 @@
     "check:capture": "node scripts/check-capture-roundtrip.cjs"
   },
   "devDependencies": {
-    "opensheetmusicdisplay": "2.1.2",
-    "jsdom": "29.1.1"
+    "fake-indexeddb": "6.2.5",
+    "idb": "8.0.3",
+    "jsdom": "29.1.1",
+    "opensheetmusicdisplay": "2.1.2"
   }
 }
