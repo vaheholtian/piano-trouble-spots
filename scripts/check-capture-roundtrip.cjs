@@ -382,13 +382,153 @@ async function main() {
       }
     }
 
-    ws.close();
-
     if (failures.length > 0) {
       console.log('FAIL capture round-trip: ' + failures.join(' | '));
+      ws.close();
+      exitCode = 1;
+      return;
+    }
+    console.log('OK capture round-trip: 8 raw events restored unmodified, ' + clicks.length + ' clicks in the timeline, piece restored from stored bytes');
+
+    // ---- Scenario 2 (02-03): B7+C8 (or spacebar) splits the session into numbered passes
+    // that survive a reload mid-drill. Runs in the same Chrome/profile, right after the
+    // scenario above -- the page is already sitting on indexUrl with the piece restored.
+    const failures2 = [];
+
+    const sessionId2 = await evaluate(ws, 'CaptureApp.start()', { awaitPromise: true });
+    if (typeof sessionId2 !== 'number') {
+      console.log('FAIL capture round-trip: CaptureApp.start() (pass scenario) did not return a session id: ' + JSON.stringify(sessionId2));
+      ws.close();
+      exitCode = 1;
+      return;
+    }
+
+    const sendPassExpression = `(() => {
+      const t = performance.now();
+      window.__fakeMidi.send([0x90, 60, 100], t);
+      window.__fakeMidi.send([0x80, 60, 0], t + 120);
+      window.__fakeMidi.send([0x90, 62, 100], t + 300);
+      window.__fakeMidi.send([0x80, 62, 0], t + 420);
+      window.__fakeMidi.send([0x90, 64, 100], t + 600);
+      window.__fakeMidi.send([0x80, 64, 0], t + 720);
+      window.__fakeMidi.send([0x90, 107, 90], t + 1000);
+      window.__fakeMidi.send([0x90, 108, 90], t + 1040);
+      window.__fakeMidi.send([0x80, 107, 0], t + 1150);
+      window.__fakeMidi.send([0x80, 108, 0], t + 1160);
+      window.__fakeMidi.send([0x90, 65, 100], t + 1400);
+      window.__fakeMidi.send([0x80, 65, 0], t + 1500);
+      window.__fakeMidi.send([0xB0, 64, 127], t + 1550);
+      window.__fakeMidi.send([0xB0, 64, 0], t + 1650);
+      window.__fakeMidi.send([0x90, 67, 100], t + 1700);
+      window.__fakeMidi.send([0x80, 67, 0], t + 1800);
+      window.__fakeMidi.send([0x90, 108, 90], t + 2000);
+      window.__fakeMidi.send([0x90, 107, 90], t + 2060);
+      window.__fakeMidi.send([0x80, 108, 0], t + 2150);
+      window.__fakeMidi.send([0x80, 107, 0], t + 2160);
+      window.__fakeMidi.send([0x90, 107, 100], t + 2400);
+      window.__fakeMidi.send([0x80, 107, 0], t + 2500);
+      return t;
+    })()`;
+    const t2 = await evaluate(ws, sendPassExpression);
+
+    await evaluate(ws, 'CaptureApp.flush()', { awaitPromise: true });
+
+    const passListLive = await evaluate(ws, `(() => Array.from(document.querySelectorAll('#passList li')).map((li) => li.textContent))()`);
+    const expectedPassListLive = ['Pass 1 - 3 notes', 'Pass 2 - 2 notes', 'Pass 3 - 1 notes (in progress)'];
+    if (JSON.stringify(passListLive) !== JSON.stringify(expectedPassListLive)) {
+      failures2.push('#passList after the pass-scenario sends was ' + JSON.stringify(passListLive) + ', expected ' + JSON.stringify(expectedPassListLive));
+    }
+
+    await send(ws, 'Page.navigate', { url: indexUrl });
+    await pollRestore(ws, 90000);
+
+    const restored2 = await evaluate(ws, 'CaptureApp.state.restored');
+    const restoredSession2 = restored2 && restored2.sessions && restored2.sessions.find((s) => s.id === sessionId2);
+    const expectedPasses2 = [
+      { ordinal: 1, noteCount: 3 },
+      { ordinal: 2, noteCount: 2 },
+      { ordinal: 3, noteCount: 1 },
+    ];
+    if (!restoredSession2) {
+      failures2.push('CaptureApp.state.restored.sessions did not contain session ' + sessionId2 + ': ' + JSON.stringify(restored2));
+    } else {
+      if (restoredSession2.endReason !== 'reopen') {
+        failures2.push('restored pass-scenario session endReason was ' + restoredSession2.endReason + ', expected reopen');
+      }
+      if (JSON.stringify(restoredSession2.passes) !== JSON.stringify(expectedPasses2)) {
+        failures2.push('restored pass-scenario session passes was ' + JSON.stringify(restoredSession2.passes) + ', expected ' + JSON.stringify(expectedPasses2));
+      }
+    }
+
+    const events2Expr = `(async () => {
+      const db = await Storage.open();
+      return await Storage.readRawEvents(db, ${JSON.stringify(sessionId2)});
+    })()`;
+    const events2 = await evaluate(ws, events2Expr, { awaitPromise: true });
+
+    let lastRawSeq2 = null;
+    if (!Array.isArray(events2) || events2.length !== 24) {
+      failures2.push('readRawEvents (pass scenario) returned ' + (Array.isArray(events2) ? events2.length : typeof events2) + ' records, expected 24');
+    } else {
+      lastRawSeq2 = events2[events2.length - 1].seq;
+
+      const markers = events2.filter((e) => e.type === 'marker');
+      if (markers.length !== 2) {
+        failures2.push('expected exactly 2 marker records, found ' + markers.length + ': ' + JSON.stringify(markers));
+      } else {
+        if (markers[0].source !== 'pair' || markers[0].timeStamp !== t2 + 1040) {
+          failures2.push('first marker was ' + JSON.stringify(markers[0]) + ', expected source pair at ' + (t2 + 1040));
+        }
+        if (markers[1].source !== 'pair' || markers[1].timeStamp !== t2 + 2060) {
+          failures2.push('second marker was ' + JSON.stringify(markers[1]) + ', expected source pair at ' + (t2 + 2060));
+        }
+      }
+
+      const pairKeyEvents = events2.filter((e) => (e.type === 'noteon' || e.type === 'noteoff') && (e.note === 107 || e.note === 108) && e.timeStamp < t2 + 2200);
+      if (pairKeyEvents.length !== 8 || !pairKeyEvents.every((e) => e.marker === true)) {
+        failures2.push('pair-key note-on/off records were not all tagged marker:true: ' + JSON.stringify(pairKeyEvents));
+      }
+
+      const loneNoteEvents = events2.filter((e) => e.note === 107 && e.timeStamp >= t2 + 2400);
+      if (loneNoteEvents.length !== 2 || !loneNoteEvents.every((e) => e.marker === false)) {
+        failures2.push('lone 107 note-on/off were not both tagged marker:false: ' + JSON.stringify(loneNoteEvents));
+      }
+
+      const controls2 = events2.filter((e) => e.type === 'control');
+      if (controls2.length !== 2 || !controls2.every((e) => e.controller === 64 && e.marker === false)) {
+        failures2.push('control records were not both controller 64 marker:false: ' + JSON.stringify(controls2));
+      }
+    }
+
+    const passes2Expr = `(async () => {
+      const db = await Storage.open();
+      return await Storage.readPasses(db, ${JSON.stringify(sessionId2)});
+    })()`;
+    const passes2 = await evaluate(ws, passes2Expr, { awaitPromise: true });
+    if (!Array.isArray(passes2) || passes2.length !== 3) {
+      failures2.push('readPasses (pass scenario) returned ' + (Array.isArray(passes2) ? passes2.length : typeof passes2) + ' records, expected 3');
+    } else {
+      passes2.forEach((pass, i) => {
+        if (pass.ordinal !== i + 1) failures2.push('pass ' + i + ' ordinal was ' + pass.ordinal + ', expected ' + (i + 1));
+        if (pass.bpm !== 120) failures2.push('pass ' + i + ' bpm was ' + pass.bpm + ', expected 120');
+      });
+      for (let i = 1; i < passes2.length; i++) {
+        if (passes2[i].startSeq !== passes2[i - 1].endSeq + 1) {
+          failures2.push('pass ' + i + ' startSeq ' + passes2[i].startSeq + ' is not contiguous with pass ' + (i - 1) + ' endSeq ' + passes2[i - 1].endSeq);
+        }
+      }
+      if (passes2[2] && lastRawSeq2 !== null && passes2[2].endSeq !== lastRawSeq2) {
+        failures2.push('third pass endSeq was ' + passes2[2].endSeq + ', expected ' + lastRawSeq2 + ' (the last raw seq)');
+      }
+    }
+
+    ws.close();
+
+    if (failures2.length > 0) {
+      console.log('FAIL capture round-trip: ' + failures2.join(' | '));
       exitCode = 1;
     } else {
-      console.log('OK capture round-trip: 8 raw events restored unmodified, ' + clicks.length + ' clicks in the timeline, piece restored from stored bytes');
+      console.log('OK capture round-trip: pass split 3/2/1 restored after reload mid-session');
       exitCode = 0;
     }
   } catch (error) {

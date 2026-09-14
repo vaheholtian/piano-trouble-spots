@@ -21,6 +21,14 @@ globalThis.CaptureApp = (() => {
     liveCount: 0,
     events: [],
     pending: new Set(),
+    // seq -> in-flight Storage.appendRawEvent promise (resolves to the record's id) -- lets
+    // onMidiEvent tag an earlier note-on's marker flag in storage even if its own write hasn't
+    // resolved yet by the time the pairing key completes the marker (D-01).
+    pendingWrites: new Map(),
+    // pass object -> its in-flight Storage.putPass (create) promise -- lets a pass be closed
+    // (an update write) even when a mark lands before its own creation write has resolved an
+    // id, without ever risking a second autoIncrement row for the same pass.
+    passWrites: new WeakMap(),
     restored: null,
     audio: null,
     audioState: '',
@@ -31,6 +39,11 @@ globalThis.CaptureApp = (() => {
     offsets: [],
     offsetCount: 0,
     resampleTimer: null,
+    detector: null,
+    markerKeys: null,
+    markerNotesDown: new Set(),
+    currentPass: null,
+    passes: [],
   };
 
   function setMidiState(text) {
@@ -51,16 +64,38 @@ globalThis.CaptureApp = (() => {
       }
 
       const open = await Storage.listOpenSessions(C.db);
+      // D-15: every session left open when the tab closed is finalized as "reopen" -- its
+      // passes are re-derived from the raw stream (never merged with a new session) and the
+      // trailing pass record in storage is closed with the last event actually recorded.
+      const reopenedPasses = new Map(); // sessionId -> PassSegmenter.segment() result
       for (const s of open) {
         await Storage.updateSession(C.db, s.id, {
           endedAt: new Date().toISOString(),
           endedPerf: null,
           endReason: 'reopen',
         });
+
+        const events = await Storage.readRawEvents(C.db, s.id);
+        const passes = PassSegmenter.segment(events, {
+          sessionStartTimeStamp: s.startedPerf,
+          sessionEndTimeStamp: null,
+          includeEmptyTrailing: false,
+        });
+        reopenedPasses.set(s.id, passes);
+
+        const storedPasses = await Storage.readPasses(C.db, s.id);
+        const unfinished = storedPasses.find((p) => p.endSeq === null);
+        if (unfinished) {
+          const lastEvent = events[events.length - 1];
+          unfinished.endSeq = lastEvent ? lastEvent.seq : unfinished.startSeq - 1;
+          unfinished.endTimeStamp = lastEvent ? lastEvent.timeStamp : null;
+          await Storage.putPass(C.db, unfinished);
+        }
       }
 
       const sessionList = $('sessionList');
       sessionList.replaceChildren();
+      const passList = $('passList');
       let sessions = [];
       if (lastPieceId) {
         sessions = await Storage.listSessionsForPiece(C.db, lastPieceId);
@@ -70,9 +105,23 @@ globalThis.CaptureApp = (() => {
       const summaries = [];
       for (const s of sessions) {
         const eventCount = await Storage.countRawEvents(C.db, s.id);
-        summaries.push({ id: s.id, endReason: s.endReason, eventCount });
+        const summary = { id: s.id, endReason: s.endReason, eventCount };
         const li = document.createElement('li');
-        li.textContent = 'Session ' + s.id + ' (' + s.endReason + '): ' + eventCount + ' events';
+        if (reopenedPasses.has(s.id)) {
+          // D-16: passes are numbered repetitions with a note count each, nothing per-note.
+          const passes = reopenedPasses.get(s.id);
+          summary.passes = passes.map((p) => ({ ordinal: p.ordinal, noteCount: p.noteCount }));
+          li.textContent = 'Session ' + s.id + ' (reopen): ' + passes.length + ' passes, ' + eventCount + ' events';
+          passList.replaceChildren();
+          passes.forEach((pass) => {
+            const item = document.createElement('li');
+            item.textContent = 'Pass ' + pass.ordinal + ' - ' + pass.noteCount + ' notes';
+            passList.appendChild(item);
+          });
+        } else {
+          li.textContent = 'Session ' + s.id + ' (' + s.endReason + '): ' + eventCount + ' events';
+        }
+        summaries.push(summary);
         sessionList.appendChild(li);
       }
 
@@ -209,8 +258,132 @@ globalThis.CaptureApp = (() => {
     }
   }
 
+  // D-03/D-08: opens the next pass with the BPM in effect right now, writes the pass record
+  // (fire-and-tracked like every other write, so the very next MIDI event sees the updated
+  // C.currentPass immediately rather than waiting on the IndexedDB round trip).
+  function openPass(ordinal, startSeq, startTimeStamp, bpm) {
+    const pass = { sessionId: C.session.id, ordinal, startSeq, startTimeStamp, endSeq: null, endTimeStamp: null, bpm };
+    C.currentPass = pass;
+    C.passes.push(pass);
+    const p = Storage.putPass(C.db, pass).then((id) => {
+      pass.id = id;
+    });
+    C.passWrites.set(pass, p);
+    C.pending.add(p);
+    p.catch((error) => {
+      toast(error instanceof Error ? error.message : String(error));
+    }).finally(() => {
+      C.pending.delete(p);
+    });
+    return pass;
+  }
+
+  // A mark (or Stop) can close a pass before its own creation write above has resolved an id
+  // -- calling db.put() on a keyPath-autoIncrement record with no id yet would silently insert
+  // a second row instead of updating the first. Wait for the creation write (if still in
+  // flight) so the id is always set before the update write goes out.
+  function persistPassUpdate(pass) {
+    const created = pass.id !== undefined ? Promise.resolve() : C.passWrites.get(pass) || Promise.resolve();
+    const p = created.then(() => Storage.putPass(C.db, pass));
+    C.pending.add(p);
+    p.catch((error) => {
+      toast(error instanceof Error ? error.message : String(error));
+    }).finally(() => {
+      C.pending.delete(p);
+    });
+    return p;
+  }
+
+  // D-04: the session panel lists passes as "Pass N - K notes", computed fresh from the raw
+  // event stream every time so it always matches what a reload will restore.
+  function renderPassList() {
+    const passes = PassSegmenter.segment(C.events, {
+      sessionStartTimeStamp: C.session.startedPerf,
+      includeEmptyTrailing: true,
+    });
+    const passList = $('passList');
+    passList.replaceChildren();
+    passes.forEach((pass, i) => {
+      const li = document.createElement('li');
+      const suffix = i === passes.length - 1 ? ' (in progress)' : '';
+      li.textContent = 'Pass ' + pass.ordinal + ' - ' + pass.noteCount + ' notes' + suffix;
+      passList.appendChild(li);
+    });
+    $('sessionState').textContent = 'Recording session ' + C.session.id + ' at ' + C.bpm + ' BPM - pass ' + C.passOrdinal;
+  }
+
+  // D-03: one mark ends the current pass and opens the next. The marker record itself is
+  // stored raw like any other event, tagged marker: true, and never snapped to a click (D-07).
+  function mark(source, timeStamp) {
+    const seq = C.seq++;
+    const rec = {
+      sessionId: C.session.id,
+      seq,
+      passOrdinal: C.passOrdinal,
+      timeStamp,
+      type: 'marker',
+      source,
+      raw: [],
+      marker: true,
+    };
+    C.events.push(rec);
+    const p = Storage.appendRawEvent(C.db, rec);
+    C.pending.add(p);
+    p.then((id) => {
+      rec.id = id;
+    }).catch((error) => {
+      toast(error instanceof Error ? error.message : String(error));
+    }).finally(() => {
+      C.pending.delete(p);
+    });
+
+    const closingPass = C.currentPass;
+    closingPass.endSeq = seq;
+    closingPass.endTimeStamp = timeStamp;
+    persistPassUpdate(closingPass);
+
+    C.passOrdinal += 1;
+    openPass(C.passOrdinal, seq + 1, timeStamp, C.bpm);
+    C.liveCount = 0;
+    renderPassList();
+  }
+
   function onMidiEvent(record) {
-    if (record.type === 'noteon') {
+    let isMarker = false;
+
+    // The marker keys' own note-off is tagged the same way its note-on was (D-04).
+    if (record.type === 'noteoff' && C.markerNotesDown.has(record.note)) {
+      isMarker = true;
+      C.markerNotesDown.delete(record.note);
+    }
+
+    const hit = C.session && C.detector ? C.detector.feed({ ...record, seq: C.seq }) : null;
+
+    if (hit) {
+      isMarker = true;
+      hit.notes.forEach((n) => C.markerNotesDown.add(n));
+      // Retag the earlier note-on of the pair, in memory and in storage, once its write
+      // resolves (it may still be in flight if the pair landed within the marker window).
+      const earlierSeq = hit.seqs[0];
+      const earlier = C.events.find((e) => e.seq === earlierSeq);
+      if (earlier) {
+        earlier.marker = true;
+        const idPromise = earlier.id !== undefined ? Promise.resolve(earlier.id) : C.pendingWrites.get(earlierSeq);
+        if (idPromise) {
+          const pu = idPromise.then((id) => Storage.updateRawEvent(C.db, id, { marker: true }));
+          C.pending.add(pu);
+          pu.catch((error) => {
+            toast(error instanceof Error ? error.message : String(error));
+          }).finally(() => {
+            C.pending.delete(pu);
+          });
+        }
+      }
+    }
+
+    // D-19: a marker-tagged note-on does not count toward the live indicator (D-04's note count
+    // is the pass's played notes only) and does not feed the clock readout below.
+    if (record.type === 'noteon' && !isMarker) {
       C.liveCount += 1;
       $('liveCount').textContent = String(C.liveCount);
       $('lastNote').textContent = MidiCapture.noteName(record.note) + ' ' + record.velocity;
@@ -225,21 +398,23 @@ globalThis.CaptureApp = (() => {
         sessionId: C.session.id,
         seq: C.seq++,
         passOrdinal: C.passOrdinal,
-        marker: false,
+        marker: isMarker,
         source: 'midi',
       };
       C.events.push(stored);
       const p = Storage.appendRawEvent(C.db, stored);
       C.pending.add(p);
+      C.pendingWrites.set(stored.seq, p);
       p.then((id) => {
         stored.id = id;
       }).catch((error) => {
         toast(error instanceof Error ? error.message : String(error));
       }).finally(() => {
         C.pending.delete(p);
+        C.pendingWrites.delete(stored.seq);
       });
 
-      if (record.type === 'noteon' && !stored.marker && C.metronome && C.pair) {
+      if (record.type === 'noteon' && !isMarker && C.metronome && C.pair) {
         const candidates = C.clicks.map((c) => c.audioTime).concat([C.metronome.nextClickTime()]);
         const t = Clock.toAudioContextTime(record.timeStamp, C.pair);
         const nearest = Clock.nearestClick(t, candidates);
@@ -249,6 +424,14 @@ globalThis.CaptureApp = (() => {
           C.offsetCount += 1;
           renderReadout();
         }
+      }
+
+      // D-16: the pass list stays live as the trailing pass grows; a mark re-renders it too
+      // (via mark() itself), so this only needs to fire on the non-mark path.
+      if (hit) {
+        mark('pair', hit.timeStamp);
+      } else {
+        renderPassList();
       }
     }
   }
@@ -279,6 +462,10 @@ globalThis.CaptureApp = (() => {
     C.pair = { ...Clock.samplePair(performance.now(), C.audio.currentTime), sampledAt: new Date().toISOString() };
     C.audioState = C.audio.state;
 
+    // D-01: the marker key pair is a stored setting, read once at Start and copied onto the
+    // session record so a later change to the setting never changes an already-recorded pass.
+    C.markerKeys = (await Storage.getSetting(C.db, 'markerKeys')) || PassMarker.DEFAULT_KEYS;
+
     const session = {
       pieceId: C.pieceId,
       startedAt: new Date().toISOString(),
@@ -287,7 +474,7 @@ globalThis.CaptureApp = (() => {
       endedPerf: null,
       endReason: null,
       bpmAtStart: bpm,
-      markerKeys: null,
+      markerKeys: C.markerKeys,
       clockPairs: [C.pair],
       latency: { base: C.audio.baseLatency, output: C.audio.outputLatency },
       calibration: null,
@@ -302,13 +489,20 @@ globalThis.CaptureApp = (() => {
     C.bpm = bpm;
     C.offsets = [];
     C.offsetCount = 0;
+    C.detector = PassMarker.createDetector({ keys: C.markerKeys });
+    C.markerNotesDown = new Set();
+    C.pendingWrites = new Map();
+    C.passWrites = new WeakMap();
+    C.passes = [];
+    C.currentPass = null;
+    openPass(1, 0, C.session.startedPerf, bpm);
     C.metronome = Metronome.create(C.audio, { timeSignatureFor, onClick });
     C.metronome.start(bpm);
     C.resampleTimer = setInterval(resample, 30000);
     renderReadout();
+    renderPassList();
     await Storage.putSetting(C.db, 'bpm:' + C.pieceId, bpm);
     $('startStop').textContent = 'Stop';
-    $('sessionState').textContent = 'Recording session ' + id + ' at ' + bpm + ' BPM';
     $('startStop').blur();
     return id;
   }
@@ -329,17 +523,42 @@ globalThis.CaptureApp = (() => {
       clearInterval(C.resampleTimer);
       C.resampleTimer = null;
     }
+
+    // D-03: the pass in progress at Stop is closed as-is (kept if it holds a non-marker note --
+    // renderPassList()/PassSegmenter.segment already applies that keep rule for display below).
+    const endedPerf = performance.now();
+    if (C.currentPass) {
+      C.currentPass.endSeq = C.seq - 1;
+      C.currentPass.endTimeStamp = endedPerf;
+      persistPassUpdate(C.currentPass);
+    }
+
     await resample();
     await flush();
     await Storage.updateSession(C.db, id, {
       endedAt: new Date().toISOString(),
-      endedPerf: performance.now(),
+      endedPerf,
       endReason,
       clockPairs: C.session.clockPairs,
       latency: C.session.latency,
       calibration: C.session.calibration,
     });
+
+    const finalPasses = PassSegmenter.segment(C.events, {
+      sessionStartTimeStamp: C.session.startedPerf,
+      sessionEndTimeStamp: endedPerf,
+      includeEmptyTrailing: false,
+    });
+    const passList = $('passList');
+    passList.replaceChildren();
+    finalPasses.forEach((pass) => {
+      const li = document.createElement('li');
+      li.textContent = 'Pass ' + pass.ordinal + ' - ' + pass.noteCount + ' notes';
+      passList.appendChild(li);
+    });
+
     C.session = null;
+    C.currentPass = null;
     $('startStop').textContent = 'Start';
     $('sessionState').textContent = 'Stopped - session ' + id + ': ' + eventCount + ' events';
   }
@@ -409,7 +628,7 @@ globalThis.CaptureApp = (() => {
     if (C.session && C.metronome) {
       // D-08/D-14: a tempo change neither ends nor restarts the session's click.
       C.metronome.setBpm(bpm);
-      $('sessionState').textContent = 'Recording session ' + C.session.id + ' at ' + bpm + ' BPM';
+      renderPassList();
     }
     if (C.pieceId) {
       await Storage.putSetting(C.db, 'bpm:' + C.pieceId, bpm);

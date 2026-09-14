@@ -36,6 +36,8 @@
   <label>BPM <input id="bpm" type="number" min="20" max="300" step="1" value="100"></label>
   <button id="startStop" type="button">Start</button>
   <span id="sessionState">Not recording</span>
+  <ol id="passList"></ol>
+  <p class="hint">Between passes press B7 and C8 together (the two highest keys), or the spacebar.</p>
   <div>
     <span id="flash" class="flash"></span>
     <span id="liveCount">0</span> notes, last <span id="lastNote">-</span>
@@ -79,6 +81,8 @@
 <script src="src/inspect-table.js"></script>
 <script src="src/score-renderer.js"></script>
 <script src="src/clock.js"></script>
+<script src="src/pass-marker.js"></script>
+<script src="src/pass-segmenter.js"></script>
 <script src="src/metronome.js"></script>
 <script src="src/midi-capture.js"></script>
 <script src="src/storage.js"></script>

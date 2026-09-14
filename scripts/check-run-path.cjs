@@ -34,6 +34,8 @@ const EXPECTED_LOCAL_SCRIPTS = [
   'src/inspect-table.js',
   'src/score-renderer.js',
   'src/clock.js',
+  'src/pass-marker.js',
+  'src/pass-segmenter.js',
   'src/metronome.js',
   'src/midi-capture.js',
   'src/storage.js',
@@ -73,6 +75,7 @@ function checkIndexHtml() {
     'id="sessionList"',
     'id="bpm"',
     'id="readout"',
+    'id="passList"',
   ];
   for (const marker of requiredMarkers) {
     if (html.includes(marker)) ok('index.html contains ' + marker);
