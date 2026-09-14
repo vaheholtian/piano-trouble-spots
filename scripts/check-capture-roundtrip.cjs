@@ -431,10 +431,19 @@ async function main() {
     })()`;
     const t2 = await evaluate(ws, sendPassExpression);
 
+    // 02-03 Task 2: the spacebar marks a pass exactly like the B7+C8 pair (D-01), from a real
+    // DOM keydown -- its timeStamp is not a synthetic MIDI offset, so it is only bounds-checked
+    // below, not matched to an exact t2+N literal.
+    await evaluate(ws, "window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }))");
+    await evaluate(ws, `(() => {
+      window.__fakeMidi.send([0x90, 69, 100], ${JSON.stringify(t2)} + 2800);
+      window.__fakeMidi.send([0x80, 69, 0], ${JSON.stringify(t2)} + 2900);
+    })()`);
+
     await evaluate(ws, 'CaptureApp.flush()', { awaitPromise: true });
 
     const passListLive = await evaluate(ws, `(() => Array.from(document.querySelectorAll('#passList li')).map((li) => li.textContent))()`);
-    const expectedPassListLive = ['Pass 1 - 3 notes', 'Pass 2 - 2 notes', 'Pass 3 - 1 notes (in progress)'];
+    const expectedPassListLive = ['Pass 1 - 3 notes', 'Pass 2 - 2 notes', 'Pass 3 - 1 notes', 'Pass 4 - 1 notes (in progress)'];
     if (JSON.stringify(passListLive) !== JSON.stringify(expectedPassListLive)) {
       failures2.push('#passList after the pass-scenario sends was ' + JSON.stringify(passListLive) + ', expected ' + JSON.stringify(expectedPassListLive));
     }
@@ -448,6 +457,7 @@ async function main() {
       { ordinal: 1, noteCount: 3 },
       { ordinal: 2, noteCount: 2 },
       { ordinal: 3, noteCount: 1 },
+      { ordinal: 4, noteCount: 1 },
     ];
     if (!restoredSession2) {
       failures2.push('CaptureApp.state.restored.sessions did not contain session ' + sessionId2 + ': ' + JSON.stringify(restored2));
@@ -467,20 +477,23 @@ async function main() {
     const events2 = await evaluate(ws, events2Expr, { awaitPromise: true });
 
     let lastRawSeq2 = null;
-    if (!Array.isArray(events2) || events2.length !== 24) {
-      failures2.push('readRawEvents (pass scenario) returned ' + (Array.isArray(events2) ? events2.length : typeof events2) + ' records, expected 24');
+    if (!Array.isArray(events2) || events2.length !== 27) {
+      failures2.push('readRawEvents (pass scenario) returned ' + (Array.isArray(events2) ? events2.length : typeof events2) + ' records, expected 27');
     } else {
       lastRawSeq2 = events2[events2.length - 1].seq;
 
       const markers = events2.filter((e) => e.type === 'marker');
-      if (markers.length !== 2) {
-        failures2.push('expected exactly 2 marker records, found ' + markers.length + ': ' + JSON.stringify(markers));
+      if (markers.length !== 3) {
+        failures2.push('expected exactly 3 marker records, found ' + markers.length + ': ' + JSON.stringify(markers));
       } else {
         if (markers[0].source !== 'pair' || markers[0].timeStamp !== t2 + 1040) {
           failures2.push('first marker was ' + JSON.stringify(markers[0]) + ', expected source pair at ' + (t2 + 1040));
         }
         if (markers[1].source !== 'pair' || markers[1].timeStamp !== t2 + 2060) {
           failures2.push('second marker was ' + JSON.stringify(markers[1]) + ', expected source pair at ' + (t2 + 2060));
+        }
+        if (markers[2].source !== 'spacebar' || !Number.isFinite(markers[2].timeStamp)) {
+          failures2.push('third marker was ' + JSON.stringify(markers[2]) + ', expected a finite-timeStamp spacebar marker');
         }
       }
 
@@ -505,8 +518,8 @@ async function main() {
       return await Storage.readPasses(db, ${JSON.stringify(sessionId2)});
     })()`;
     const passes2 = await evaluate(ws, passes2Expr, { awaitPromise: true });
-    if (!Array.isArray(passes2) || passes2.length !== 3) {
-      failures2.push('readPasses (pass scenario) returned ' + (Array.isArray(passes2) ? passes2.length : typeof passes2) + ' records, expected 3');
+    if (!Array.isArray(passes2) || passes2.length !== 4) {
+      failures2.push('readPasses (pass scenario) returned ' + (Array.isArray(passes2) ? passes2.length : typeof passes2) + ' records, expected 4');
     } else {
       passes2.forEach((pass, i) => {
         if (pass.ordinal !== i + 1) failures2.push('pass ' + i + ' ordinal was ' + pass.ordinal + ', expected ' + (i + 1));
@@ -517,8 +530,9 @@ async function main() {
           failures2.push('pass ' + i + ' startSeq ' + passes2[i].startSeq + ' is not contiguous with pass ' + (i - 1) + ' endSeq ' + passes2[i - 1].endSeq);
         }
       }
-      if (passes2[2] && lastRawSeq2 !== null && passes2[2].endSeq !== lastRawSeq2) {
-        failures2.push('third pass endSeq was ' + passes2[2].endSeq + ', expected ' + lastRawSeq2 + ' (the last raw seq)');
+      const last = passes2[passes2.length - 1];
+      if (last && lastRawSeq2 !== null && last.endSeq !== lastRawSeq2) {
+        failures2.push('last pass endSeq was ' + last.endSeq + ', expected ' + lastRawSeq2 + ' (the last raw seq)');
       }
     }
 
@@ -528,7 +542,7 @@ async function main() {
       console.log('FAIL capture round-trip: ' + failures2.join(' | '));
       exitCode = 1;
     } else {
-      console.log('OK capture round-trip: pass split 3/2/1 restored after reload mid-session');
+      console.log('OK capture round-trip: pass split 3/2/1/1 restored after reload mid-session');
       exitCode = 0;
     }
   } catch (error) {

@@ -564,7 +564,19 @@ globalThis.CaptureApp = (() => {
   }
 
   function stop() {
+    $('startStop').blur();
     return endSession('stop');
+  }
+
+  // D-01: the spacebar does the same as the B7+C8 pair, from the laptop. The keydown's own
+  // DOMHighResTimeStamp shares performance.now()'s origin -- Claude's Discretion: the keydown
+  // time is the boundary; the MIDI stream has no corresponding note, so nothing else is tagged.
+  function onKeyDown(ev) {
+    if (ev.code !== 'Space') return;
+    const tag = ev.target && ev.target.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    ev.preventDefault();
+    if (C.session) mark('spacebar', ev.timeStamp);
   }
 
   async function init() {
@@ -647,7 +659,9 @@ globalThis.CaptureApp = (() => {
     flush();
   });
 
+  window.addEventListener('keydown', onKeyDown);
+
   init();
 
-  return { state: C, init, start, stop, flush };
+  return { state: C, init, start, stop, flush, mark };
 })();
