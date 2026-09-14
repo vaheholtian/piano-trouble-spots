@@ -123,7 +123,7 @@ Plans:
   5. Before advancing beyond rung 1, user played 10+ passes at one tempo with one repeated pitch mistake and one one-off slip. Selecting a marked score note shows plain-language counts with assessed and unassessed totals, and the user confirms the recurring mistake is distinguishable from the slip. Reuse this minimal view as the ladder expands; bar shading, intensity scales, timing statistics, and ranked lists are not needed for this experiment
   6. Fixture examples cover a missing first note, late entry, repeated pitches, an extra note, an interrupted pass, ambiguous alignment, and tempo changes. The pass-origin and counting rules above explain each result, and these rules are checked on relevant piano examples before the next rung
 
-**Plans:** 1/9 plans executed
+**Plans:** 2/9 plans executed
 
 Plans:
 **Wave 1**
@@ -132,7 +132,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Tracer: one marked pass of C D F F G goes align → aggregate → paint → red E4 on the notation and the detail sentence on click. Then:
+- [x] 03-02-PLAN.md — Tracer: one marked pass of C D F F G goes align → aggregate → paint → red E4 on the notation and the detail sentence on click. Then:
   - a pass is judged only once its clicks exist (live equals replay over stable fields);
   - sessions stay bound to their own score across piece switches and same-file reopens;
   - Start and Stop invalidate in-flight restorations, and a failed piece load ends capture cleanly with its passes kept;
@@ -245,7 +245,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Score on Screen | 3/3 | Complete    | 2026-09-13 |
 | 2. Click and Capture | 3/4 documented | Complete per user; final evidence record pending | 2026-09-14 |
-| 3. What You Actually Played | 1/9 | In Progress|  |
+| 3. What You Actually Played | 2/9 | In Progress|  |
 | 4. Early and Late | 0/TBD | Not started | - |
 | 5. Habits, Not Slips | 0/TBD | Not started | - |
 | 6. Real Pieces and Passages | 0/TBD | Not started | - |
