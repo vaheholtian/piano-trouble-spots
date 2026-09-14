@@ -236,9 +236,27 @@ globalThis.CaptureApp = (() => {
     return A.session ? A.session.passes : [];
   }
 
+  // review 03-02 HIGH: a pass is judged only once the click timeline covers it
+  // (Align.isFinal, section 5) -- the live result then equals a reload's. Final results are
+  // reused from A.resultCache instead of re-aligned on every click (review 03-03 MEDIUM
+  // round 2): a final pass's stableFields never change, so caching is safe.
   function analyzeCurrent() {
     if (!A.session) return;
-    A.results = Align.analyzeSession(A.session.model, completedPasses(), A.session.clicks);
+    const sessionEnded = !A.session.live;
+    const passes = completedPasses();
+    const finalPasses = [];
+    const pendingOrdinals = [];
+    for (const pass of passes) {
+      if (Align.isFinal(pass, A.session.clicks, sessionEnded)) finalPasses.push(pass);
+      else pendingOrdinals.push(pass.ordinal);
+    }
+    A.pendingOrdinals = pendingOrdinals;
+    A.results = finalPasses.map((pass) => {
+      if (A.resultCache.has(pass.ordinal)) return A.resultCache.get(pass.ordinal);
+      const result = Align.alignPass(A.session.model, pass, A.session.clicks);
+      A.resultCache.set(pass.ordinal, result);
+      return result;
+    });
     A.aggregate = Aggregate.foldSession(A.session.model, A.results);
     if (A.view.bpm === null || A.view.bpm === undefined) {
       const firstGroup = A.aggregate.tempoGroups[0];
@@ -265,9 +283,17 @@ globalThis.CaptureApp = (() => {
 
   function renderAnalysis() {
     const svgMap = ScoreRenderer.state.svgMap;
-    if (!A.session || !ScoreRenderer.state.model || !svgMap) {
-      if (svgMap) Paint.resetAll(svgMap);
-      Paint.clearExtras($('markOverlay'));
+    // review 03-02 HIGH: a session is painted only on the score it was recorded against -- a
+    // model mismatch (a piece switch's piece-rendered event firing before the session catches
+    // up) is treated exactly like no session, so the old session's marks never show on a new
+    // piece's notation. No DOM write happens here on purpose: the mismatch/no-session case is
+    // reached only right after a fresh render (svgMap is either null, per loadPiece's own
+    // teardown, or brand-new elements that VexFlow already drew with no annotation) or with an
+    // unchanged, already-reset map -- there is never stale colour on the currently rendered
+    // piece to clear, and a piece switch's own repaint must not touch the new piece's noteheads
+    // before its own session (if any) is known.
+    const modelMismatch = A.session && ScoreRenderer.state.model && A.session.model !== ScoreRenderer.state.model;
+    if (!A.session || !ScoreRenderer.state.model || !svgMap || modelMismatch) {
       $('analysisHeading').textContent = 'No session';
       $('tempoGroup').hidden = true;
       refreshDetail();
@@ -334,8 +360,14 @@ globalThis.CaptureApp = (() => {
     refreshDetail();
   }
 
+  // review 03-02 HIGH round 3: a live session always owns A. start() and endSession() advance
+  // A.loadGen before their own first await, and this function re-checks generation AND
+  // liveness after every await, so Start pressed while a restoration is in flight (or a piece
+  // switch superseding this call) never lets a stale restoration overwrite the live session.
   async function loadLatestSession(pieceId, model) {
+    const gen = ++A.loadGen;
     const sessions = await Storage.listSessionsForPiece(C.db, pieceId);
+    if (gen !== A.loadGen || C.session) return;
     if (sessions.length === 0) {
       A.session = null;
       A.detail = null;
@@ -345,12 +377,15 @@ globalThis.CaptureApp = (() => {
     const sorted = sessions.slice().sort((a, b) => a.id - b.id);
     const s = sorted[sorted.length - 1];
     const events = await Storage.readRawEvents(C.db, s.id);
+    if (gen !== A.loadGen || C.session) return;
     const passes = PassSegmenter.segment(events, { sessionStartTimeStamp: s.startedPerf, sessionEndTimeStamp: s.endedPerf, includeEmptyTrailing: false });
     const clicks = await Storage.readClicks(C.db, s.id);
+    if (gen !== A.loadGen || C.session) return;
+    const changedSession = !A.session || A.session.id !== s.id;
     A.resultCache = new Map();
     A.session = { id: s.id, pieceId, model, live: false, passes, clicks, bpmAtStart: s.bpmAtStart };
     A.view = { kind: 'session', bpm: null, ordinal: null };
-    A.detail = null;
+    if (changedSession) A.detail = null;
     analyzeCurrent();
   }
 
@@ -366,6 +401,10 @@ globalThis.CaptureApp = (() => {
     }).finally(() => {
       C.pending.delete(p);
     });
+
+    // review 03-02 HIGH: a pending pass is judged on the first click that covers it, not only
+    // on the next mark -- the click that finalizes it may arrive well after the mark itself.
+    if (A.session && A.session.live && A.pendingOrdinals.length > 0) analyzeCurrent();
   }
 
   // D-10: a diagnostic number and a running median only -- no per-note judgement of any kind.
@@ -602,6 +641,9 @@ globalThis.CaptureApp = (() => {
     // metronome's time-signature callback must never read the model currently on screen,
     // which a failed load can set to null mid-session.
     C.sessionModel = ScoreRenderer.state.model;
+    // A live session always owns A (review 03-02 HIGH round 3): advance before the first
+    // await so an outstanding loadLatestSession discards its result once it re-checks.
+    A.loadGen++;
 
     // Pitfall P2-3: AudioContext (or its resume()) must be created/called synchronously inside
     // this click handler's own task, before any await, or some browsers never honor the
@@ -673,6 +715,9 @@ globalThis.CaptureApp = (() => {
 
   async function endSession(endReason) {
     if (!C.session) return;
+    // A live session always owns A (review 03-02 HIGH round 3): advance before the first
+    // await so an outstanding loadLatestSession discards its result once it re-checks.
+    A.loadGen++;
     const id = C.session.id;
     const eventCount = C.events.length;
     if (C.metronome) {
@@ -763,10 +808,15 @@ globalThis.CaptureApp = (() => {
   }
 
   document.addEventListener('piece-loaded', async (ev) => {
+    // Advanced before any await (review 03-02 HIGH round 3) -- an in-flight loadLatestSession
+    // for a previous piece must never overwrite whatever this load (or a Start pressed in the
+    // meantime) settles on.
+    const gen = ++A.loadGen;
     await C.dbReady;
     try {
       const bytes = await ev.detail.file.arrayBuffer();
       const id = await Storage.hashBytes(bytes);
+      if (gen !== A.loadGen) return;
       if (C.session && id !== C.pieceId) {
         await endSession('piece-change');
       }
@@ -779,7 +829,18 @@ globalThis.CaptureApp = (() => {
       });
       await Storage.putSetting(C.db, 'lastPieceId', id);
       C.pieceId = id;
-      if (!C.session) await loadLatestSession(id, ev.detail.model);
+      if (A.session && A.session.pieceId === id) {
+        // review 03-02 HIGH round 2: reopening the same file during capture. loadPiece always
+        // builds a fresh model object; the same bytes give the same structural note ids
+        // (Phase 1 D-09), so rebinding to the new model and re-analysing keeps painting. The
+        // remembered detail target is cleared -- a model rebind is still a model change.
+        A.session = { ...A.session, model: ev.detail.model };
+        A.resultCache = new Map();
+        A.detail = null;
+        analyzeCurrent();
+      } else if (!C.session) {
+        await loadLatestSession(id, ev.detail.model);
+      }
       C.fileName = ev.detail.file.name;
       const storedBpm = await Storage.getSetting(C.db, 'bpm:' + id);
       C.bpm = Metronome.isValidBpm(storedBpm) ? storedBpm : 100;
@@ -789,9 +850,24 @@ globalThis.CaptureApp = (() => {
     }
   });
 
+  // review 03-02 HIGH round 3: a failed piece load ends capture cleanly. loadPiece's catch
+  // clears S.model/svgMap and dispatches this event synchronously; endSession's own synchronous
+  // prefix stops the metronome and resample timer before any await, and timeSignatureFor already
+  // reads C.sessionModel (never the null model on screen), so no click callback can touch it.
+  // The ended session keeps its own model, final passes and clicks (live: false) -- nothing is
+  // painted while no score is on screen, and reopening the same piece restores its marks.
   document.addEventListener('piece-unloaded', () => {
+    A.loadGen++;
+    const ending = C.session ? endSession('piece-unloaded') : null;
     C.pieceId = null;
-    renderAnalysis();
+    (async () => {
+      try {
+        await ending;
+      } catch (error) {
+        toast(error instanceof Error ? error.message : String(error));
+      }
+      renderAnalysis();
+    })();
   });
 
   document.addEventListener('piece-rendered', () => {
