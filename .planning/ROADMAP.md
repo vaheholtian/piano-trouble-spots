@@ -128,13 +128,14 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Interpretation contract docs/analysis-rules.md. Covers every rule, reconciled rung-1 examples, late-entry readings with a probe-token lag bound, the `reachClock` switch (D-11 default, user decision pending), finalization over stable fields, gap denominators with "at least" lower bounds, tempo membership, chord rules, shapes and tunables. Also twelve hand-derived rung-1 fixtures with a shape test, and the headless-Chrome paint harness with per-group OK lines (red until the tracer)
+- [ ] 03-01-PLAN.md — Interpretation contract docs/analysis-rules.md. Covers every rule, reconciled rung-1 examples, late-entry readings with a probe-token lag bound, the `reachClock` switch (D-11 default, user decision pending), finalization over stable fields, gap denominators with "at least" lower bounds, tempo membership, chord rules, seq-ordered tokens with an absolute chord window, restart judged over every optimal alternative, shapes and tunables. Also twelve hand-derived rung-1 fixtures with an exact-coverage shape test, and the headless-Chrome paint harness with per-group OK lines, including Start during a delayed restoration and an unreadable file during capture (red until the tracer)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [ ] 03-02-PLAN.md — Tracer: one marked pass of C D F F G goes align → aggregate → paint → red E4 on the notation and the detail sentence on click. Then:
   - a pass is judged only once its clicks exist (live equals replay over stable fields);
   - sessions stay bound to their own score across piece switches and same-file reopens;
+  - Start and Stop invalidate in-flight restorations, and a failed piece load ends capture cleanly with its passes kept;
   - final results are reused;
   - the detail panel regenerates.
 
@@ -142,30 +143,30 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2; 03-03 and 03-04 run in parallel, disjoint files)*
 
-- [ ] 03-03-PLAN.md — Engine, rung-1 rules: ambiguity from the co-optimal edge set (repeated pitches, messy pass), the late-entry reading robust to a stray or missing opening note, both reach clocks pinned, restart without a mark, tempo change inside a pass (clicks strictly before the end), no-origin edge, measured analysis budget
-- [ ] 03-04-PLAN.md — Display: single-pass view and the way back with the detail following the view, tempo-group selector, extra-note + glyphs (system breaks included) with counts and sentences, ten-line paint harness with reconciled counts, suffix-tolerant capture round-trip check
+- [ ] 03-03-PLAN.md — Engine, rung-1 rules: ambiguity from the co-optimal edge set (repeated pitches, messy pass), the late-entry reading robust to a stray or missing opening note, both reach clocks pinned, restart without a mark judged over every optimal alternative (tie fixture), tempo change inside a pass (clicks strictly before the end), no-origin edge, measured analysis budget (median and worst)
+- [ ] 03-04-PLAN.md — Display: single-pass view and the way back with the detail following the view, tempo-group selector that always returns to a session view, extra-note + glyphs (system breaks included) with counts and whole-result sentences, twelve-line paint harness with reconciled counts, suffix-tolerant capture round-trip check, and the complete live click callback measured in Chrome
 
 **Wave 4** *(blocked on 03-03 and 03-04)*
 
-- [ ] 03-05-PLAN.md — Rung-1 piano gate: all node/npm checks, README and a rung-1 checklist with the ready rule, views and sentences. Then at the FP-60X:
+- [ ] 03-05-PLAN.md — Rung-1 piano gate: all node/npm checks (including the messy pass through the browser UI and the live-callback budget), README and a rung-1 checklist with the ready rule, views and sentences. Then at the FP-60X:
   - Scenario A: single passes, including the reach decision, a doubled E and a within-pass tempo change;
   - Scenario B: twelve passes at one tempo, then a controlled BPM change right after a mark.
 
 **Wave 5** *(blocked on the rung-1 approval and reach decision in 03-05)*
 
-- [ ] 03-06-PLAN.md — Rung 2: apply the user's reach decision to its one switch, ladder regression through the real OSMD parser against an independent oracle (rungs 1-2), rung-2 checklist and piano check
+- [ ] 03-06-PLAN.md — Rung 2: apply the user's reach decision to its one switch, ladder regression through the real OSMD parser against an independent oracle (rungs 1-2), rung-2 checklist and piano check (with a piano recheck of the late-and-abandoned bar if the user chose "reading")
 
-**Wave 6** *(blocked on the rung-2 approval in 03-06)*
+**Wave 6** *(blocked on the rung-2 approval in 03-06 and, after a "reading" choice, the D-11 amendment in 03-CONTEXT.md)*
 
-- [ ] 03-07-PLAN.md — Rung 3: both hands as one slot (fixture and ladder), rung-3 checklist and piano check
+- [ ] 03-07-PLAN.md — Rung 3: both hands as one slot (fixture and ladder), two-hand offsets around the 50 ms window in both orders with the tolerance recorded, rung-3 checklist and piano check
 
 **Wave 7** *(blocked on the rung-3 approval in 03-07)*
 
-- [ ] 03-08-PLAN.md — Rung 4: chords per notehead with re-strikes, an exact in-chord assignment that reports ties as ambiguous (no cap, brute-force checked, oversized fumble tokens), ladder rung 4, rung-4 checklist with the equidistant chord and timestamp-based roll diagnosis, piano check
+- [ ] 03-08-PLAN.md — Rung 4: chords per notehead with re-strikes, an exact in-chord assignment that reports ties as ambiguous (no cap, checked against an equal-first brute-force oracle, oversized fumble tokens), chord performance in node and Chrome, ladder rung 4, rung-4 checklist with the equidistant chord and timestamp-based roll diagnosis, piano check
 
 **Wave 8** *(blocked on the rung-4 approval in 03-08)*
 
-- [ ] 03-09-PLAN.md — Rung 5 and phase close: ladder rung 5 with interpolation anchors, 60 BPM and repeated bass pitches, rung-5 checklist and piano check (late, wrapped, repeated G3), evidence table per success criterion
+- [ ] 03-09-PLAN.md — Rung 5 and phase close: ladder rung 5 with interpolation anchors, 60 BPM and repeated bass pitches, rung-5 checklist and piano check (late, wrapped, repeated G3, a reopen compared sentence by sentence against a session with known marks), evidence table per success criterion
 
 **UI hint**: yes
 
