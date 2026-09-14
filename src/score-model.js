@@ -115,8 +115,8 @@ globalThis.ScoreModel = (() => {
           for (const voiceEntry of staffEntry.VoiceEntries) {
             const voice = voiceEntry.ParentVoice.VoiceId;
             const onset = toQuarterBeats(voiceEntry.Timestamp);
-            voiceEntry.Notes.forEach((note, chordPosition) => {
-              visit({ measure, measureNumber, staff, voice, onset, chordPosition, note });
+            voiceEntry.Notes.forEach((note) => {
+              visit({ measure, measureNumber, staff, voice, onset, note });
             });
           }
         }
