@@ -1,8 +1,8 @@
 ---
 phase: 3
 reviewers: [codex]
-reviewed_at: 2026-09-14T18:31:18Z
-plans_reviewed: [03-01-PLAN.md, 03-02-PLAN.md, 03-03-PLAN.md, 03-04-PLAN.md, 03-05-PLAN.md, 03-06-PLAN.md]
+reviewed_at: 2026-09-14T19:59:48Z
+plans_reviewed: [03-01-PLAN.md, 03-02-PLAN.md, 03-03-PLAN.md, 03-04-PLAN.md, 03-05-PLAN.md, 03-06-PLAN.md, 03-07-PLAN.md]
 models:
   codex: "gpt-6-astra (reasoning=medium)"
 model_sources:
@@ -17,166 +17,200 @@ model_sources:
 
 ## Codex Review
 
-Reviewed all **6 plans** against the repository’s capture, segmentation, scheduler, storage, renderer, and test code. I also ran read-only probes against the installed OSMD parser and checked the proposed cost arithmetic. Findings below concern the planned implementation; no files were changed.
+Reviewed all seven local plans against the capture, storage, renderer, score-model, and existing test code. The analysis modules are not implemented yet; findings below concern the proposed implementation. No files were changed.
 
 ## 03-01
 
-**Summary:** Writing the interpretation contract before implementing alignment is sound, but the proposed contract contains unresolved mathematical and counting contradictions. These should be settled before its shapes and expectations become dependencies.
+**Summary:** The contract-first approach is appropriate, but the revised contract changes a locked counting rule and overstates what its extra-note denominators establish.
 
 **Strengths**
 
-- Hand-derived fixtures have a credible existing reference: the rung-1 test independently specifies all five structural IDs, pitches, onsets, and durations. This supports testing intended musical outcomes independently of alignment output. [test/score-model.test.cjs:17](<C:/Code/Piano Mistakes/test/score-model.test.cjs:17>)
-- The painting research checks out: the renderer maps individual chord notehead containers, and inspection of the installed OSMD bundle confirmed that its colouring implementation sets child fills. [src/score-renderer.js:83](<C:/Code/Piano Mistakes/src/score-renderer.js:83>)
+- Hand-derived expectations use real structural note IDs and rational onsets, matching the existing model and tests. This provides an independent check on alignment rather than reproducing its output. Evidence: [src/score-model.js:127](<C:/Code/Piano Mistakes/src/score-model.js:127>), [test/score-model.test.cjs:13](<C:/Code/Piano Mistakes/test/score-model.test.cjs:13>).
 
 **Concerns**
 
-- **HIGH — The cost model does not preserve the general late-entry promise.** The inequalities are explicitly fitted to five slots. For 12 distinct quarter notes played one beat late, the intended matching costs **40.8**, while deleting the first score note, substituting 11 notes, and inserting the last performance note costs **40**. Thus the intended matching cannot win. Even rung 1 played three beats late costs **51**, versus **35** for deleting and inserting everything. Keeping the origin fixed does not prevent timing from destroying pitch correspondence. [03-01-PLAN.md:174](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:174>), [03-CONTEXT.md:24](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-CONTEXT.md:24>)
-- **HIGH — Extra-note denominators conflict with retained confident extras.** The messy fixture has four confident extras at `before:3`, but that gap is assessed only when preceding slot E is assessed—and E is ambiguous. A session containing that pass therefore has known extras with zero assessed gap opportunities. The no-origin case creates the same problem. The contract does not say whether these become misleading fractions or disappear from counts. [03-01-PLAN.md:165](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:165>), [03-01-PLAN.md:176](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:176>)
-- **MEDIUM — A worked gap expectation contradicts the gap definition.** The crossover example places extra F exactly at E’s expected time, 2000 ms, but calls it `before:2`. Counting slots whose expected time is `≤ 2000` gives `before:3`. [03-01-PLAN.md:172](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:172>), [03-01-PLAN.md:176](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:176>)
+- **HIGH — Lagged reach changes D-11.** The late-abandoned example makes F unassessed because its *lagged* time is 3000, despite its fixed-origin time being 2500 and the mark occurring at 2700. D-11 explicitly defines reach from the fixed origin. Retaining the original `deviationMs` does not preserve that counting policy. Evidence: [03-01-PLAN.md:178](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:178>), [03-CONTEXT.md:37](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-CONTEXT.md:37>).
+- **MEDIUM — A bounded numerator is presented as an exact rate.** The plan acknowledges that extras beside ambiguous alignment are a lower bound, but the detail sentence still says “in N of M assessed passes.” Reaching a gap does not establish whether that gap contained an extra when event assignments remain ambiguous. `passesWithExtra <= assessedPasses` checks arithmetic consistency, not assessment validity. Evidence: [03-01-PLAN.md:195](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:195>), [03-01-PLAN.md:327](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:327>).
+- **MEDIUM — Harness reporting conflicts with tracer completion.** This plan prints its success lines at the end, while 03-02 Task 1 requires the first success line even if a later scenario fails. Evidence: [03-01-PLAN.md:288](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:288>), [03-02-PLAN.md:207](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-02-PLAN.md:207>).
 
 **Suggestions**
 
-- Test the cost policy against longer passages, larger delays, and multi-note slots before freezing it.
-- Define gap assessability independently and require `passesWithExtra ≤ assessedPasses`, with explicit handling of unassessed gaps.
-- Reconcile every numeric worked example before generating fixtures.
+- Resolve fixed-origin versus lagged reach explicitly before freezing fixtures. If changing D-11, update the canonical decision and validate a **late, abandoned** pass.
+- Separate gap reach from confidence about extra-note presence; expose uncertain opportunities or label counts as minimum confirmed counts.
+- Print each harness success immediately after its assertions pass.
 
-**Risk Assessment: HIGH.** Errors here would propagate into every engine, aggregate, and display test.
+**Risk Assessment: HIGH.** This contract controls every subsequent label, denominator, and Phase 4 interpretation.
 
 ## 03-02
 
-**Summary:** The end-to-end slice uses appropriate existing seams, but its live timeline and piece lifecycle need stronger contracts. Its current browser test would miss important runtime failures.
+**Summary:** The integration seams are well chosen, but the finalization assertions and model-identity guard need correction before this plan is executable.
 
 **Strengths**
 
-- Reusing `PassSegmenter` preserves actual marker exclusion and event ordering: it sorts by `seq`, splits at marker records, and retains only non-marker note-ons in `notes`. [src/pass-segmenter.js:36](<C:/Code/Piano Mistakes/src/pass-segmenter.js:36>)
-- Repainting after map reconstruction is necessary and correctly located: resize currently rerenders and replaces `S.svgMap`. [src/score-renderer.js:148](<C:/Code/Piano Mistakes/src/score-renderer.js:148>)
+- Repainting after map reconstruction addresses a real lifecycle: `renderAndMap()` rebuilds the SVG map, including on resize. The existing map already targets individual chord noteheads. Evidence: [src/score-renderer.js:83](<C:/Code/Piano Mistakes/src/score-renderer.js:83>), [src/score-renderer.js:148](<C:/Code/Piano Mistakes/src/score-renderer.js:148>).
+- Pending analysis addresses an actual scheduling horizon: clicks are emitted by a 25 ms timer with 100 ms look-ahead. Evidence: [src/metronome.js:10](<C:/Code/Piano Mistakes/src/metronome.js:10>), [src/metronome.js:65](<C:/Code/Piano Mistakes/src/metronome.js:65>).
 
 **Concerns**
 
-- **HIGH — Live and replayed results can disagree because future clicks are missing.** The scheduler records only about 100 ms ahead. At the planned boundary—mark at 2750, G expected at 3000, grace 250 ms—G’s click is not yet recorded live, so `expectedTime` returns null and G is unassessed. Reanalysis after that click exists can turn it into a miss. The harness conceals this by waiting for ten clicks before injecting the earlier passes. [src/metronome.js:10](<C:/Code/Piano Mistakes/src/metronome.js:10>), [src/metronome.js:65](<C:/Code/Piano Mistakes/src/metronome.js:65>), [03-02-PLAN.md:172](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-02-PLAN.md:172>), [03-01-PLAN.md:257](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:257>)
-- **HIGH — Piece switching can analyze the old session against the new score.** `loadPiece()` replaces the model and renders before dispatching `piece-loaded`; that listener then ends the old session. The planned `endSession()` hook analyzes using `ScoreRenderer.state.model`, which already belongs to the new piece. The new render event also exposes old analysis to the new map before session loading completes. [src/score-renderer.js:45](<C:/Code/Piano Mistakes/src/score-renderer.js:45>), [src/capture-app.js:600](<C:/Code/Piano Mistakes/src/capture-app.js:600>), [03-02-PLAN.md:195](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-02-PLAN.md:195>)
-- **MEDIUM — Stored deviations use the chord token’s first onset for every note.** This loses the individual timing of a rolled chord despite retaining `playedSeq`. MIDI capture already preserves each event’s timestamp, so Phase 4 should not inherit this artificial synchronization. [03-02-PLAN.md:185](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-02-PLAN.md:185>), [src/capture-app.js:395](<C:/Code/Piano Mistakes/src/capture-app.js:395>)
+- **HIGH — The final-prefix deep-equality promise is false for the specified result shape.** In the plan’s own start=3600/end=3800 case, the prefix ending at the accented click at 6000 qualifies as final. Later score-slot times are then `null`; appending clicks supplies those times. Consequently, `PassResult.slots` changes even if verdicts remain unchanged. Evidence: [03-02-PLAN.md:195](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-02-PLAN.md:195>), [03-02-PLAN.md:244](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-02-PLAN.md:244>).
+- **HIGH — One required test contradicts the reach formula.** With clicks through 3000, end=2750 and grace=250, G’s expected time exists and satisfies `3000 <= 3000`. It must be missed, not `not-reached` as the test specifies. Evidence: [03-02-PLAN.md:245](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-02-PLAN.md:245>).
+- **HIGH — Reopening the same file during capture permanently suppresses painting.** Loading creates a fresh model object, but the capture session ends only when the content hash changes. The proposed reference-identity guard therefore rejects the new map, while the live session prevents `loadLatestSession()` from rebinding it. Evidence: [src/score-renderer.js:45](<C:/Code/Piano Mistakes/src/score-renderer.js:45>), [src/capture-app.js:605](<C:/Code/Piano Mistakes/src/capture-app.js:605>), [03-02-PLAN.md:254](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-02-PLAN.md:254>).
 
 **Suggestions**
 
-- Specify when a completed pass becomes final given the scheduler horizon; test immediate marking followed by later clicks and reload.
-- Bind analysis to a piece ID and model snapshot, and reject stale asynchronous load results.
-- Calculate per-note deviations from the matched event’s timestamp.
+- Define precisely which result fields must remain stable; canonicalize unavailable tail metadata or compare the stable verdict projection.
+- Correct the 3000-click expectation and retain a separate test where that click is genuinely absent.
+- Add a live same-file reload test and explicitly reconcile the verified piece identity with the newly rendered model.
 
-**Risk Assessment: HIGH.** These issues can change visible judgments despite unchanged playing.
+**Risk Assessment: HIGH.** These issues affect both mandatory tests and an ordinary file-opening action.
 
 ## 03-03
 
-**Summary:** Considering all optimal sequence assignments is a substantial improvement over arbitrary traceback. However, chord tokenization and internal chord assignment still permit false certainty and false misses.
+**Summary:** The ambiguity and tempo rules are substantially better specified, but late-entry robustness is still narrower than the advertised guarantee.
 
 **Strengths**
 
-- Forward/backward optimal-path analysis examines alternative assignments globally instead of treating a locally tied backpointer as sufficient evidence. This directly supports the required regional ambiguity behavior. [03-03-PLAN.md:125](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-03-PLAN.md:125>)
-- Both-hands fixtures match the existing model’s actual ordering and separate staff IDs at shared onsets. [test/score-model.test.cjs:88](<C:/Code/Piano Mistakes/test/score-model.test.cjs:88>)
+- Co-optimal consuming edges distinguish genuinely different assignments from arbitrary traceback choices. Evidence: [03-03-PLAN.md:152](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-03-PLAN.md:152>).
+- Strictly-before-end tempo membership matches the scheduler: a click receives the current BPM label before that BPM determines the following interval. Evidence: [src/metronome.js:27](<C:/Code/Piano Mistakes/src/metronome.js:27>), [03-03-PLAN.md:241](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-03-PLAN.md:241>).
 
 **Concerns**
 
-- **HIGH — Chord ambiguity is explicitly guessed.** The plan prohibits resolving genuine assignment ties by order, then instructs internal chord ties to prefer the lower score pitch. For expected C–E–G played C–F, F is equally close to E and G; selecting one changes which note is wrong and which is missed. The outer DP cannot detect this because `pairCost` has already discarded the alternative. [03-03-PLAN.md:54](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-03-PLAN.md:54>), [03-03-PLAN.md:125](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-03-PLAN.md:125>)
-- **HIGH — A re-strike can fragment an otherwise complete chord.** Expected C–E–G, played C@1000, E@1010, C@1020, G@1030 becomes tokens `{C,E}` and `{C,G}` under the specified tokenizer. Since one score slot can pair with only one token, the engine cannot report all chord notes played plus one extra C. The existing proposed re-strike test uses a single-note score and misses this interaction. [03-01-PLAN.md:172](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:172>), [03-03-PLAN.md:159](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-03-PLAN.md:159>)
+- **HIGH — One accidental opening note disables the late-entry repair.** The lag bound uses the first played event. Add an extra C6 on the origin before the twelve-note performance one beat late: the bound becomes zero. The intended correspondence costs `3 + 12×3.4 = 43.8`; twelve in-slot substitutions plus the final insertion cost `12×3 + 3 = 39`. Thus the cost model again prefers cascading wrong notes. The capture layer correctly retains that accidental event. Evidence: [03-03-PLAN.md:194](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-03-PLAN.md:194>), [src/pass-segmenter.js:54](<C:/Code/Piano Mistakes/src/pass-segmenter.js:54>).
+- **MEDIUM — Computational cost has no acceptance budget.** Every lag runs a DP, and each pending-click callback reanalyzes completed passes. Long waits before entry enlarge the lag search; repeated sessions multiply the work on the same thread scheduling the metronome. Evidence: [03-03-PLAN.md:194](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-03-PLAN.md:194>), [03-02-PLAN.md:252](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-02-PLAN.md:252>), [src/metronome.js:75](<C:/Code/Piano Mistakes/src/metronome.js:75>).
 
 **Suggestions**
 
-- Carry alternative internal chord assignments into per-note ambiguity results.
-- Add a chord-with-re-strike fixture and permit duplicate played events without forcing unrelated chord notes into separate alignment units.
-- Test chord order permutations alongside these cases.
+- Add late-entry fixtures with an opening extra and a missing opening note. Resolve their interpretation without filtering raw events.
+- Measure a realistic 20–50-pass session plus a long-wait case; reuse finalized in-memory results where necessary.
 
-**Risk Assessment: HIGH.** Both defects undermine the phase’s central promise of trustworthy notehead attribution.
+**Risk Assessment: HIGH.** The remaining failure directly undermines trust in messy real performances.
 
 ## 03-04
 
-**Summary:** The restrained two-view interface is appropriate. The main gaps are geometric verification and keeping detail text synchronized with the displayed view.
+**Summary:** The display work is appropriately limited, but the existing and extended harness expectations have not been fully reconciled.
 
 **Strengths**
 
-- Consolidating pass-list rendering addresses genuine duplication across live capture, stop, and restore paths. [src/capture-app.js:98](<C:/Code/Piano Mistakes/src/capture-app.js:98>), [src/capture-app.js:299](<C:/Code/Piano Mistakes/src/capture-app.js:299>), [src/capture-app.js:552](<C:/Code/Piano Mistakes/src/capture-app.js:552>)
-- Recomputing glyph positions from current mapped elements correctly accommodates replacement of the SVG map during resize. [src/score-renderer.js:151](<C:/Code/Piano Mistakes/src/score-renderer.js:151>)
+- Fresh geometry on repaint fits the renderer’s replacement of notehead elements after resize. The pure geometry tests also make placement rules independently reviewable. Evidence: [src/score-renderer.js:148](<C:/Code/Piano Mistakes/src/score-renderer.js:148>), [03-04-PLAN.md:159](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-04-PLAN.md:159>).
 
 **Concerns**
 
-- **MEDIUM — Midpoint placement fails across notation systems.** Averaging the right edge of the preceding slot and the left edge of the following slot assumes both occupy the same system. Across a line break, the glyph can appear over unrelated notation. DOM-relative coordinates solve coordinate conversion, but not this semantic placement problem. The harness checks glyph text and existence, not its geometry. [03-04-PLAN.md:148](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-04-PLAN.md:148>), [03-04-PLAN.md:152](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-04-PLAN.md:152>)
-- **MEDIUM — Detail text can become stale.** View changes repaint the score, but the described handlers only replace detail text on a subsequent note or glyph click. A sentence from the 120 BPM group can remain beneath the 100 BPM score, or retain an old denominator after another pass. [03-04-PLAN.md:117](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-04-PLAN.md:117>), [03-04-PLAN.md:150](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-04-PLAN.md:150>)
+- **HIGH — The mandatory capture regression test will reject the new labels.** It sends future-timestamped events immediately and asserts exact strings such as `Pass 1 - 3 notes`. Those completed passes will now be pending, and `renderPassItems()` adds `(finishing)`. The script is not included in this plan’s changes. Evidence: [scripts/check-capture-roundtrip.cjs:406](<C:/Code/Piano Mistakes/scripts/check-capture-roundtrip.cjs:406>), [scripts/check-capture-roundtrip.cjs:446](<C:/Code/Piano Mistakes/scripts/check-capture-roundtrip.cjs:446>), [03-04-PLAN.md:121](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-04-PLAN.md:121>).
+- **MEDIUM — The extended reload scenario retains a stale denominator.** The original reload assertion uses the step-5 E4 sentence, “1 of 3.” Adding correction pass 4 makes the 120 BPM denominator four, but the later-step amendments do not update that sentence. Evidence: [03-01-PLAN.md:287](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:287>), [03-04-PLAN.md:166](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-04-PLAN.md:166>), [03-04-PLAN.md:169](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-04-PLAN.md:169>).
 
 **Suggestions**
 
-- Define a system-break placement rule and test glyph bounding boxes on resized rung 5.
-- Retain the selected detail target and regenerate its sentence on every relevant update, or explicitly clear the panel.
+- Update the capture regression to verify stable ordinal/note-count data separately from analysis-status suffixes, preserving all raw-storage assertions.
+- Reconcile every downstream sentence and pass count after extending the paint scenario.
 
-**Risk Assessment: MEDIUM.** The architecture is suitable, but mismatched text or glyph placement could mislead practice decisions.
+**Risk Assessment: HIGH.** The plan currently requires incompatible outputs from its mandatory gates.
 
 ## 03-05
 
-**Summary:** The remaining edge cases are necessary, but the tempo-boundary rule and ladder test construction contain concrete defects.
+**Summary:** The twelve-pass experiment finally targets the core value, but the interaction timing makes parts of the checklist impossible to follow literally.
 
 **Strengths**
 
-- The parser-backed ladder tests reuse the existing OSMD loading path rather than introducing another MusicXML parser. [test/osmd-node-env.cjs:85](<C:/Code/Piano Mistakes/test/osmd-node-env.cjs:85>)
-- Restart precedence and explicit negative fixtures make the heuristic reviewable instead of leaving restart handling implicit. [03-05-PLAN.md:118](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-05-PLAN.md:118>)
+- Twelve attempts at one tempo, an actual tally, and a question about which mistake to practise form a useful product experiment. This matches the roadmap’s requirement to validate the aggregate before advancing. Evidence: [03-05-PLAN.md:163](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-05-PLAN.md:163>), [.planning/ROADMAP.md:17](<C:/Code/Piano Mistakes/.planning/ROADMAP.md:17>).
 
 **Concerns**
 
-- **HIGH — A tempo change after a pass can invalidate that pass.** `tempoChangedBetween` includes the first click at or after the end timestamp. If the pass ends at 3400 and the next click at 3500 carries a new BPM, a constant-tempo completed pass becomes `tempo-changed`. The actual scheduler changes the BPM on the next unscheduled click, so this is reachable through the existing control. [03-05-PLAN.md:134](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-05-PLAN.md:134>), [src/metronome.js:77](<C:/Code/Piano Mistakes/src/metronome.js:77>)
-- **HIGH — The rung-4 omission test expects the wrong result with the proposed helper.** `passFor` ends 400 ms after the last played note. Removing rung 4’s second chord leaves the final played note around 1015 ms, so end-plus-grace is about 1665 ms; the omitted chord is expected at 2000 ms and must be `not-reached`, not missed. The parser probe confirmed this separation. [03-05-PLAN.md:169](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-05-PLAN.md:169>), [test/score-model.test.cjs:101](<C:/Code/Piano Mistakes/test/score-model.test.cjs:101>)
-- **MEDIUM — The performance generator shares the implementation being tested.** Generating timestamps through `Align.buildSlots` and `Align.expectedTime`, then checking alignment against those timestamps, allows shared timing errors to pass. An assertion that an eighth note lies somewhere between clicks does not establish its correct position. [03-05-PLAN.md:169](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-05-PLAN.md:169>)
+- **HIGH — Step 12 cannot occur at the time it specifies.** Step 11 requires waiting for finalization and reading two detail sentences; step 12 then says to change BPM “right after marking pass 12.” Meanwhile, the mark has already opened pass 13 and its origin may have passed at 80 BPM. Changing tempo then can correctly make the next attempt `tempo-changed`, contradicting the expected two clean tempo groups. Evidence: [03-05-PLAN.md:164](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-05-PLAN.md:164>), [src/capture-app.js:344](<C:/Code/Piano Mistakes/src/capture-app.js:344>).
+- **MEDIUM — Inspection time conflicts with “start on the next accent.”** Finalization plus reading the panel can consume the next downbeat. The checklist needs a deliberate preparation boundary before the next attempt, otherwise it unintentionally tests late entry. Evidence: [03-05-PLAN.md:133](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-05-PLAN.md:133>), [src/pass-segmenter.js:48](<C:/Code/Piano Mistakes/src/pass-segmenter.js:48>).
 
 **Suggestions**
 
-- Define tempo membership using explicit pass boundaries and distinguish interpolation support from evidence of a tempo change.
-- Keep the omission test’s end mark fixed beyond the omitted chord.
-- Independently specify representative rung-5 timestamps and note IDs.
+- Schedule the immediate tempo change before inspecting results, or make it a separate controlled experiment.
+- Explicitly mark again when ready after inspection; allow the resulting empty passes and avoid hard-coded ordinals where appropriate.
 
-**Risk Assessment: HIGH.** The present tests could both reject correct behavior and accept incorrect behavior.
+**Risk Assessment: HIGH.** The current protocol can produce false defect reports or misleading approval evidence.
 
 ## 03-06
 
-**Summary:** Human verification is correctly mandatory, but its sequencing and instructions currently cannot establish the required phase acceptance.
+**Summary:** The independent ladder oracle is strong and its rung-5 anchors are correct. Sequencing and bounded chord assignment still need attention.
 
 **Strengths**
 
-- Recording actual piano observations and stopping on false marks follows the existing verification approach, which already treats notation mismatches as defects. [fixtures/README.md:7](<C:/Code/Piano Mistakes/fixtures/README.md:7>), [03-06-PLAN.md:147](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-06-PLAN.md:147>)
+- I parsed the actual rung-5 file through the existing OSMD helper and confirmed 41 notes and all four proposed anchors: 2250, 3750, 5250, and 5500 ms. The oracle uses the model’s rational measure starts and onsets. Evidence: [src/score-model.js:139](<C:/Code/Piano Mistakes/src/score-model.js:139>), [03-06-PLAN.md:192](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-06-PLAN.md:192>).
 
 **Concerns**
 
-- **HIGH — The first piano experiment happens after harder-rung implementation.** This gate depends on both 03-04 and 03-05, after both-hands, chord, and full-ladder work. The roadmap explicitly requires trying rung-1 feedback before expanding to those capabilities. [03-06-PLAN.md:6](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-06-PLAN.md:6>), [.planning/ROADMAP.md:17](<C:/Code/Piano Mistakes/.planning/ROADMAP.md:17>)
-- **HIGH — Scenario B does not deliver 10+ passes at one tempo.** It instructs eight passes at 80 BPM and four at 100 BPM. Neither comparison group meets the success criterion, and the repeated mistake and slip need not even occur in the same group. [03-06-PLAN.md:143](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-06-PLAN.md:143>), [.planning/ROADMAP.md:123](<C:/Code/Piano Mistakes/.planning/ROADMAP.md:123>)
-- **MEDIUM — Several expected observations contradict the rules.** “Mark before F’s click” does not ensure F is unassessed under a half-beat grace. On rung 4, one wrong E followed by one missed E produces a tied aggregate, which stays red under the specified tie rule—not blue. The checklist must explicitly select the single-pass view for that observation. [03-06-PLAN.md:136](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-06-PLAN.md:136>), [03-06-PLAN.md:160](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-06-PLAN.md:160>), [03-01-PLAN.md:176](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-01-PLAN.md:176>)
+- **HIGH — Ordered expansion remains only partially fixed.** After rung-1 approval, Task 1 implements rung 4, Task 2 covers rung 3, and Task 3 covers all rungs before the next hardware checkpoint. The roadmap requires checking the current rung before expanding, not merely moving the first checkpoint earlier. Evidence: [03-06-PLAN.md:114](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-06-PLAN.md:114>), [03-06-PLAN.md:146](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-06-PLAN.md:146>), [.planning/ROADMAP.md:17](<C:/Code/Piano Mistakes/.planning/ROADMAP.md:17>).
+- **MEDIUM — Assignment enumeration has an unspecified failure mode.** A “small cap” is permitted without defining the result when reached. Performance tokens can contain more notes than score chords. Truncating enumeration could report a guessed pairing as uniquely determined. Evidence: [03-06-PLAN.md:164](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-06-PLAN.md:164>), [src/pass-segmenter.js:54](<C:/Code/Piano Mistakes/src/pass-segmenter.js:54>).
 
 **Suggestions**
 
-- Move the rung-1 piano gate ahead of harder-rung implementation dependencies.
-- Run all 12 experimental passes at one tempo; test tempo switching separately afterward.
-- Specify the selected view and precise marking window for every expected observation.
+- Interleave rung-2, rung-3, rung-4, and rung-5 implementation/checkpoints.
+- Specify a complete assignment algorithm or an honest ambiguity fallback when the cap is reached; test an oversized fumble token.
 
-**Risk Assessment: HIGH.** The current procedure could approve unmet requirements or report correct behavior as defective.
+**Risk Assessment: HIGH.** The numerical foundation is sound, but execution still violates the required progression.
 
-**Overall assessment:** Revise before execution. The module boundaries and source reuse are strong; the blocking risks are interpretation consistency, live/replay stability, chord attribution, and the delayed product experiment. Address those before expanding the fixture suite around the current contract.
+## 03-07
 
-Next options: revise the plans, save this review, re-review a focused area, or discuss a finding.
+**Summary:** The named-view expectations are clear, but the final acceptance claim exceeds the hardware evidence collected.
+
+**Strengths**
+
+- Explicitly checking blue in the missed pass and red in the tied aggregate removes an important source of misleading reports. Evidence: [03-07-PLAN.md:124](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-07-PLAN.md:124>).
+
+**Concerns**
+
+- **MEDIUM — Required hardware scenarios remain uncovered.** The checklists do not explicitly exercise repeated-pitch ambiguity, the equidistant chord pairing, or an intentional within-pass tempo change. Nevertheless, the completion statement claims every required interpretation case was checked at the piano. Evidence: [03-07-PLAN.md:118](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-07-PLAN.md:118>), [03-07-PLAN.md:166](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-07-PLAN.md:166>), [.planning/ROADMAP.md:124](<C:/Code/Piano Mistakes/.planning/ROADMAP.md:124>).
+- **MEDIUM — Roll-speed diagnosis relies on subjective estimates.** Asking “how slow” a roll was cannot distinguish a grouping defect from crossing the 50 ms threshold. The captured event timestamps already contain the necessary evidence. Evidence: [03-07-PLAN.md:127](<C:/Code/Piano Mistakes/.planning/phases/03-what-you-actually-played/03-07-PLAN.md:127>), [src/storage.js:147](<C:/Code/Piano Mistakes/src/storage.js:147>).
+
+**Suggestions**
+
+- Add the missing relevant hardware probes before claiming full criterion-6 acceptance.
+- Record the affected pass and inspect its retained timestamp spread when a chord test fails.
+
+**Risk Assessment: MEDIUM.** The principal issue is completeness and reliability of acceptance evidence.
+
+## Overall assessment
+
+**Recommendation: revise before execution.** The architecture is suitable, but the plans are not yet internally executable.
+
+Prioritize:
+
+1. Resolve the reach policy and late-entry counterexample.
+2. Correct finalization assertions and same-file reload handling.
+3. Reconcile both browser harnesses.
+4. Repair checklist timing and restore rung-by-rung gates.
+
+The parser probe verified the rung-5 anchors; it did **not** validate the proposed alignment engine or establish that the full test suite passes.
+
+Next options: revise the plans, save this review, review another scope, discuss a finding, or give another direction.
 
 ---
 
 ## Consensus Summary
 
-Single reviewer (Codex, source-grounded with `file:line` citations), so there is no cross-reviewer consensus. The findings below are ranked by what they would do to the pianist's trust in the marks. Overall verdict: **revise before execution**.
+Single reviewer (Codex, source-grounded with `file:line` citations, round 2 after the af0835b replan), so there is no cross-reviewer consensus. Round-1 findings are not repeated. Codex found them addressed, except where noted below. Verdict: **revise before execution**, though the problems are now about internal consistency rather than the architecture.
 
 ### Agreed Strengths
-(Only one reviewer.) Codex found the module boundaries and source reuse strong: `PassSegmenter` reuse, repainting after the SVG map rebuilds, parser-backed ladder tests through the existing OSMD path, and a mandatory at-the-piano gate.
+(Only one reviewer.)
+- The pending/finalization concept matches the real 25 ms / 100 ms scheduler horizon.
+- Tempo membership that counts only clicks strictly before the pass end matches the scheduler.
+- Co-optimal ambiguity detection is sound.
+- The rung-5 oracle anchors (2250/3750/5250/5500 ms) were independently confirmed through the OSMD parser.
+- The 12-pass single-tempo experiment now targets the core value.
 
 ### Agreed Concerns
-(Only one reviewer; HIGH-severity items, highest priority.)
-1. **The cost model can't handle a late start on longer passages (03-01).** With 12 notes played a beat late, deleting and reinserting notes costs less than the intended matching, so pitch correspondence is lost. Rung 1 played three beats late fails the same way.
-2. **Extra-note denominators are inconsistent (03-01).** Confident extras can land in gaps that were never assessed, which produces passes-with-extra > assessed passes.
-3. **Live results can disagree with a replay (03-02).** Clicks are only recorded ~100 ms ahead, so a note expected after the marker is unassessed live but can become a miss on reanalysis.
-4. **Switching pieces analyses the old session against the new score (03-02).** `loadPiece()` swaps the model before `piece-loaded` ends the old session.
-5. **Chord handling is unreliable (03-03).** Internal chord ties are resolved by lower pitch, which is a guess. A re-strike inside a chord splits it into two tokens and causes false misses.
-6. **A tempo change right after a pass marks it tempo-changed (03-05).** The rung-4 omission test also expects "missed" where the helper produces "not-reached".
-7. **The piano test is scheduled too late and can't meet the success criterion (03-06).** Its first run comes after the harder rungs, against the roadmap's rung-1-first order. Scenario B's 8+4 passes split across tempos never reach 10+ passes at one tempo.
+(Only one reviewer; HIGH items, highest priority.)
+1. **Lagged reach contradicts locked decision D-11 (03-01).** D-11 defines reach from the fixed origin. Either keep that rule or change D-11 explicitly. The planner flagged this as a decision for the user.
+2. **The late-entry repair is disabled by one stray opening note (03-03).** The lag bound comes from the first played event. With an extra C on the origin, a 12-note late pass costs 43.8 against 39 for cascading substitutions.
+3. **Two finalization tests contradict the rules (03-02).** Deep equality fails because tail slot times get filled in later. The clicks-through-3000 test expects not-reached, but G must be missed.
+4. **Reopening the same file during capture permanently stops painting (03-02).** The model-identity guard rejects the new model, and the live session never rebinds.
+5. **The existing `check-capture-roundtrip.cjs` will fail on the new "(finishing)" labels (03-04).** The extended paint scenario also keeps a stale "1 of 3" denominator.
+6. **Piano checklist timing (03-05).** Step 12's tempo change can't happen "right after marking pass 12" once inspection time is included. Inspecting results can also eat the next downbeat.
+7. **Rung-by-rung gating is only partly fixed (03-06).** Rungs 3, 4 and 5 are all built before the next piano check. Codex wants a check per rung.
 
-MEDIUM items: a worked gap example contradicts the gap rule (03-01); per-note deviations use the chord token's first onset (03-02); glyph midpoint placement breaks across system breaks, and detail text goes stale (03-04); the performance generator reuses the code under test (03-05); some checklist expectations contradict the rules (03-06).
+MEDIUM items:
+- Extra-note counts are a lower bound but are phrased as exact rates (03-01).
+- The harness reports success only at the end, while the tracer expects per-scenario reporting (03-01/03-02).
+- No performance budget for per-lag DP and repeated reanalysis (03-03).
+- The chord-assignment enumeration cap has no defined fallback (03-06).
+- The piano checks omit repeated-pitch ambiguity, the equidistant chord and within-pass tempo change, yet claim full acceptance (03-07).
+- Roll-speed diagnosis relies on subjective estimates rather than stored timestamps (03-07).
 
 ### Divergent Views
-None (single reviewer).
+None (single reviewer). One item carries over between rounds: finding 1 above (lagged vs fixed-origin reach) is the same decision the round-1 planner flagged for the user. The reviewer and the planner disagree on it, so it needs a user decision rather than another replan.
